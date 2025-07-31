@@ -21,19 +21,17 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    // JwtUtil 클래스에 디버그 로그 추가
+    // 기존 generateToken 메서드 (employeeCode만)
     public String generateToken(String employeeCode) {
-        System.out.println("=== JWT 토큰 생성 시작 ===");
+        System.out.println("=== JWT 토큰 생성 시작 (employeeCode만) ===");
         System.out.println("employeeCode: " + employeeCode);
-//        System.out.println("secret: " + secret);
-//        System.out.println("expiration: " + expiration);
 
         try {
             String token = Jwts.builder()
                     .setSubject(employeeCode)
                     .setIssuedAt(new Date())
-//                    .setExpiration(new Date(System.currentTimeMillis() + expiration))
-//                    .signWith(SignatureAlgorithm.HS512, secret)
+                    .setExpiration(new Date(System.currentTimeMillis() + JWT_EXPIRATION))
+                    .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                     .compact();
 
             System.out.println("생성된 토큰: " + token);
@@ -45,28 +43,62 @@ public class JwtUtil {
         }
     }
 
-//    public String generateToken(String employeeCode) {
-//        try {
-//            System.out.println("JWT 토큰 생성 시작 - employeeCode: " + employeeCode);
-//
-//            String token = Jwts.builder()
-//                    .setSubject(employeeCode)
-//                    .setIssuedAt(new Date())
-//                    .setExpiration(new Date(System.currentTimeMillis() + JWT_EXPIRATION))
-//                    .signWith(getSigningKey(), SignatureAlgorithm.HS256)
-//                    .compact();
-//
-//            System.out.println("JWT 토큰 생성 완료: " + token);
-//            return token;
-//
-//        } catch (Exception e) {
-//            System.err.println("JWT 토큰 생성 중 오류 발생: " + e.getMessage());
-//            e.printStackTrace();
-//            return null;
-//        }
-//    }
+    // 새로운 generateToken 메서드 (employeeCode + userId)
+    public String generateToken(String employeeCode, Long userId) {
+        System.out.println("=== JWT 토큰 생성 시작 (employeeCode + userId) ===");
+        System.out.println("employeeCode: " + employeeCode);
+        System.out.println("userId: " + userId);
 
-    // 누락된 메서드 추가: 토큰에서 employeeCode 추출
+        try {
+            String token = Jwts.builder()
+                    .setSubject(employeeCode)
+                    .claim("userId", userId) // userId를 클레임으로 추가
+                    .setIssuedAt(new Date())
+                    .setExpiration(new Date(System.currentTimeMillis() + JWT_EXPIRATION))
+                    .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                    .compact();
+
+            System.out.println("생성된 토큰: " + token);
+            return token;
+        } catch (Exception e) {
+            System.out.println("토큰 생성 실패: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    // 토큰에서 userId 추출 (추가된 메서드)
+    public Long getUserIdFromToken(String token) {
+        try {
+            System.out.println("토큰에서 userId 추출 시작");
+            Claims claims = getAllClaimsFromToken(token);
+
+            // userId 클레임에서 값 추출
+            Object userIdObj = claims.get("userId");
+            if (userIdObj == null) {
+                System.err.println("토큰에 userId 클레임이 없습니다.");
+                return null;
+            }
+
+            Long userId = null;
+            if (userIdObj instanceof Integer) {
+                userId = ((Integer) userIdObj).longValue();
+            } else if (userIdObj instanceof Long) {
+                userId = (Long) userIdObj;
+            } else if (userIdObj instanceof String) {
+                userId = Long.parseLong((String) userIdObj);
+            }
+
+            System.out.println("추출된 userId: " + userId);
+            return userId;
+        } catch (Exception e) {
+            System.err.println("userId 추출 중 오류: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    // 토큰에서 employeeCode 추출
     public String getEmployeeCodeFromToken(String token) {
         try {
             System.out.println("토큰에서 employeeCode 추출 시작");

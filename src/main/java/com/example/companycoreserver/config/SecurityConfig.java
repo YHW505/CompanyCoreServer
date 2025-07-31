@@ -26,18 +26,21 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // CSRF 비활성화
+                .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/api/auth/**").permitAll() // 인증 관련 엔드포인트 허용
-                        .requestMatchers("/api/public/**").permitAll() // 공개 엔드포인트 허용
+                        .requestMatchers("/api/auth/**").permitAll()  // 로그인 관련
+                        .requestMatchers("/api/users/**").authenticated()  // 사용자 관련 - 인증 필요
+                        .requestMatchers("/api/users/first-login").authenticated()  // 첫 로그인 업데이트
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                );
+                )
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

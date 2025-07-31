@@ -1,5 +1,6 @@
 package com.example.companycoreserver.controller;
 
+import com.example.companycoreserver.dto.Role;
 import com.example.companycoreserver.entity.User;
 import com.example.companycoreserver.service.AuthService;
 import com.example.companycoreserver.dto.LoginRequest;
@@ -25,11 +26,10 @@ public class AuthController {
         System.out.println("요청 직원코드: " + loginRequest.getEmployeeCode());
 
         try {
-            // 1. 먼저 사용자 존재 여부 확인 (UserRepository.existsByEmployeeCode 사용)
+            // 1. 먼저 사용자 존재 여부 확인
             if (!authService.userExists(loginRequest.getEmployeeCode())) {
                 System.err.println("❌ 존재하지 않는 직원코드: " + loginRequest.getEmployeeCode());
                 LoginResponse response = new LoginResponse();
-                response.setMessage("존재하지 않는 직원코드입니다");
                 return ResponseEntity.status(401).body(response);
             }
 
@@ -41,16 +41,23 @@ public class AuthController {
                 User user = authService.getUserByEmployeeCode(loginRequest.getEmployeeCode());
 
                 if (user != null) {
-                    // 4. 성공 응답 생성 (User entity 필드에 맞춤)
+                    // 4. 🎯 모든 필드를 응답에 설정
                     LoginResponse response = new LoginResponse();
                     response.setToken(token);
                     response.setEmployeeCode(user.getEmployeeCode());
                     response.setUsername(user.getUsername());
-                    response.setRole(user.getRole().toString());
-                    response.setMessage("로그인 성공");
-                    response.setFirstLogin(user.getIsFirstLogin());
+                    response.setRole(user.getRole() != null ? user.getRole() : Role.EMPLOYEE);
                     response.setUserId(user.getUserId());
                     response.setDepartmentId(user.getDepartmentId());
+
+                    // 🔥 누락된 필드들 추가
+                    response.setEmail(user.getEmail() != null ? user.getEmail() : "");
+                    response.setPhone(user.getPhone() != null ? user.getPhone() : "");
+                    response.setJoinDate(user.getJoinDate());
+                    response.setPositionId(user.getPositionId());
+                    response.setIsFirstLogin(user.getIsFirstLogin() != null ? user.getIsFirstLogin() : 1);
+                    response.setIsActive(user.getIsActive() != null ? user.getIsActive() : 0);
+                    response.setCreatedAt(user.getCreatedAt());
 
                     System.out.println("로그인 완료 - 사용자: " + user.getUsername());
                     System.out.println("역할: " + user.getRole());
@@ -66,7 +73,6 @@ public class AuthController {
 
             // 실패 응답
             LoginResponse response = new LoginResponse();
-            response.setMessage("로그인 실패 - 패스워드를 확인해주세요");
             return ResponseEntity.status(401).body(response);
 
         } catch (Exception e) {
@@ -74,10 +80,10 @@ public class AuthController {
             e.printStackTrace();
 
             LoginResponse response = new LoginResponse();
-            response.setMessage("서버 오류가 발생했습니다");
             return ResponseEntity.status(500).body(response);
         }
     }
+
 
     // 추가: 사용자 존재 확인 API (테스트용)
     @GetMapping("/check-user/{employeeCode}")
