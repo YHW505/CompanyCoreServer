@@ -1,6 +1,6 @@
 package com.example.companycoreserver.controller;
 
-import com.example.companycoreserver.dto.Role;
+import com.example.companycoreserver.entity.Enum.Role;
 import com.example.companycoreserver.entity.User;
 import com.example.companycoreserver.service.AuthService;
 import com.example.companycoreserver.dto.LoginRequest;

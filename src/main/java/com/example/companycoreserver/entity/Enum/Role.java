@@ -1,4 +1,4 @@
-package com.example.companycoreserver.dto;
+package com.example.companycoreserver.entity.Enum;
 
 public enum Role {
     ADMIN,

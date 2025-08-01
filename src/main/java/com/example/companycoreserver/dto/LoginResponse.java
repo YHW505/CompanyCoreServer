@@ -1,5 +1,6 @@
 package com.example.companycoreserver.dto;
 
+import com.example.companycoreserver.entity.Enum.Role;
 import com.example.companycoreserver.entity.User;
 
 import java.time.LocalDate;

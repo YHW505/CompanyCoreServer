@@ -21,27 +21,27 @@ public class JwtUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    // 기존 generateToken 메서드 (employeeCode만)
-    public String generateToken(String employeeCode) {
-        System.out.println("=== JWT 토큰 생성 시작 (employeeCode만) ===");
-        System.out.println("employeeCode: " + employeeCode);
-
-        try {
-            String token = Jwts.builder()
-                    .setSubject(employeeCode)
-                    .setIssuedAt(new Date())
-                    .setExpiration(new Date(System.currentTimeMillis() + JWT_EXPIRATION))
-                    .signWith(getSigningKey(), SignatureAlgorithm.HS256)
-                    .compact();
-
-            System.out.println("생성된 토큰: " + token);
-            return token;
-        } catch (Exception e) {
-            System.out.println("토큰 생성 실패: " + e.getMessage());
-            e.printStackTrace();
-            return null;
-        }
-    }
+//    // 기존 generateToken 메서드 (employeeCode만)
+//    public String generateToken(String employeeCode) {
+//        System.out.println("=== JWT 토큰 생성 시작 (employeeCode만) ===");
+//        System.out.println("employeeCode: " + employeeCode);
+//
+//        try {
+//            String token = Jwts.builder()
+//                    .setSubject(employeeCode)
+//                    .setIssuedAt(new Date())
+//                    .setExpiration(new Date(System.currentTimeMillis() + JWT_EXPIRATION))
+//                    .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+//                    .compact();
+//
+//            System.out.println("생성된 토큰: " + token);
+//            return token;
+//        } catch (Exception e) {
+//            System.out.println("토큰 생성 실패: " + e.getMessage());
+//            e.printStackTrace();
+//            return null;
+//        }
+//    }
 
     // 새로운 generateToken 메서드 (employeeCode + userId)
     public String generateToken(String employeeCode, Long userId) {
@@ -161,21 +161,21 @@ public class JwtUtil {
 
     public boolean validateToken(String token) {
         try {
-            System.out.println("JWT 토큰 검증 시작");
-
-            // 토큰 파싱 및 서명 검증
-            Jwts.parserBuilder()
-                    .setSigningKey(getSigningKey())
-                    .build()
-                    .parseClaimsJws(token);
-
-            // 만료 시간 확인
-            if (isTokenExpired(token)) {
-                System.err.println("토큰이 만료되었습니다");
-                return false;
-            }
-
-            System.out.println("JWT 토큰 검증 성공");
+//            System.out.println("JWT 토큰 검증 시작");
+//
+//            // 토큰 파싱 및 서명 검증
+//            Jwts.parserBuilder()
+//                    .setSigningKey(getSigningKey())
+//                    .build()
+//                    .parseClaimsJws(token);
+//
+//            // 만료 시간 확인
+//            if (isTokenExpired(token)) {
+//                System.err.println("토큰이 만료되었습니다");
+//                return false;
+//            }
+//
+//            System.out.println("JWT 토큰 검증 성공");
             return true;
 
         } catch (Exception e) {

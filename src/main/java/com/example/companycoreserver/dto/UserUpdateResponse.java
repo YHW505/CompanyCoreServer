@@ -1,17 +1,16 @@
 // UserUpdateResponse.java
 package com.example.companycoreserver.dto;
 
-
 public class UserUpdateResponse {
     private boolean success;
     private String message;
-    private UserInfo userInfo;
+    private UserInfo.Response userInfo; // ✅ UserInfo → UserInfo.Response로 변경
 
     // 기본 생성자
     public UserUpdateResponse() {}
 
     // 전체 생성자
-    public UserUpdateResponse(boolean success, String message, UserInfo userInfo) {
+    public UserUpdateResponse(boolean success, String message, UserInfo.Response userInfo) {
         this.success = success;
         this.message = message;
         this.userInfo = userInfo;
@@ -33,7 +32,7 @@ public class UserUpdateResponse {
         return message;
     }
 
-    public UserInfo getUserInfo() {
+    public UserInfo.Response getUserInfo() { // ✅ 반환 타입 변경
         return userInfo;
     }
 
@@ -46,7 +45,7 @@ public class UserUpdateResponse {
         this.message = message;
     }
 
-    public void setUserInfo(UserInfo userInfo) {
+    public void setUserInfo(UserInfo.Response userInfo) { // ✅ 파라미터 타입 변경
         this.userInfo = userInfo;
     }
 

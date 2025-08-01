@@ -1,11 +1,17 @@
 package com.example.companycoreserver.entity;
-import com.example.companycoreserver.dto.Role;
+
+import com.example.companycoreserver.entity.Enum.Role;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class User {
 
     @Id
@@ -13,16 +19,16 @@ public class User {
     @Column(name = "user_id")
     private Long userId;
 
-    @Column(name = "employee_code", length = 255)
+    @Column(name = "employee_code", length = 255, unique = true, nullable = false)
     private String employeeCode;
 
-    @Column(name = "username", length = 50)
+    @Column(name = "username", length = 50, nullable = false)
     private String username;
 
     @Column(name = "join_date")
     private LocalDate joinDate;
 
-    @Column(name = "password", length = 255)
+    @Column(name = "password", length = 255, nullable = false)
     private String password;
 
     @Column(name = "position_id")
@@ -32,19 +38,19 @@ public class User {
     private Integer departmentId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "role", length = 8)
+    @Column(name = "role")
     private Role role;
 
     @Column(name = "is_first_login")
-    private Integer isFirstLogin = 1; // 1: 첫 로그인, 0: 일반 상태
+    private Integer isFirstLogin;
 
     @Column(name = "is_active")
-    private Integer isActive = 1; // 1: 활성, 0: 비활성
+    private Integer isActive;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 
-    @Column(name = "email", length = 255)
+    @Column(name = "email", length = 255, unique = true, nullable = false)
     private String email;
 
     @Column(name = "phone", length = 255)
@@ -53,152 +59,123 @@ public class User {
     @Column(name = "birth_date")
     private LocalDate birthDate;
 
+    // 🔗 관계 매핑
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "position_id", insertable = false, updatable = false)
+    @JsonIgnoreProperties({"users", "hibernateLazyInitializer", "handler"})
+    private Position position;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "department_id", insertable = false, updatable = false)
+    @JsonIgnoreProperties({"users", "hibernateLazyInitializer", "handler"})
+    private Department department;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Attendance> attendances = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Schedule> schedules = new ArrayList<>();
+
+    @OneToMany(mappedBy = "assignedToUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Task> assignedTasks = new ArrayList<>();
+
+    @OneToMany(mappedBy = "assignedByUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Task> createdTasks = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<LeaveRequest> leaves = new ArrayList<>();
+
+    @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Message> sentMessages = new ArrayList<>();
+
+    @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Message> receivedMessages = new ArrayList<>();
+
     // 기본 생성자
     public User() {}
 
-    // 전체 생성자
-    public User(Long userId, String employeeCode, String username, LocalDate joinDate,
-                String password, Integer positionId, Integer departmentId, Role role,
-                Integer isFirstLogin, Integer isActive, LocalDateTime createdAt,
-                String email, String phone, LocalDate birthDate) {
-        this.userId = userId;
+    // 생성자
+    public User(String employeeCode, String username, String email, String password,
+                Integer positionId, Integer departmentId, Role role) {
         this.employeeCode = employeeCode;
         this.username = username;
-        this.joinDate = joinDate;
+        this.email = email;
         this.password = password;
         this.positionId = positionId;
         this.departmentId = departmentId;
         this.role = role;
-        this.isFirstLogin = isFirstLogin;
-        this.isActive = isActive;
-        this.createdAt = createdAt;
-        this.email = email;
-        this.phone = phone;
-        this.birthDate = birthDate;
     }
 
-    // Getters
-    public Long getUserId() {
-        return userId;
-    }
+    // Getter/Setter (모든 필드에 대해)
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
 
-    public String getEmployeeCode() {
-        return employeeCode;
-    }
+    public String getEmployeeCode() { return employeeCode; }
+    public void setEmployeeCode(String employeeCode) { this.employeeCode = employeeCode; }
 
-    public String getUsername() {
-        return username;
-    }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
 
-    public LocalDate getJoinDate() {
-        return joinDate;
-    }
+    public LocalDate getJoinDate() { return joinDate; }
+    public void setJoinDate(LocalDate joinDate) { this.joinDate = joinDate; }
 
-    public String getPassword() {
-        return password;
-    }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
-    public Integer getPositionId() {
-        return positionId;
-    }
+    public Integer getPositionId() { return positionId; }
+    public void setPositionId(Integer positionId) { this.positionId = positionId; }
 
-    public Integer getDepartmentId() {
-        return departmentId;
-    }
+    public Integer getDepartmentId() { return departmentId; }
+    public void setDepartmentId(Integer departmentId) { this.departmentId = departmentId; }
 
-    public Role getRole() {
-        return role;
-    }
+    public Role getRole() { return role; }
+    public void setRole(Role role) { this.role = role; }
 
-    public Integer getIsFirstLogin() {
-        return isFirstLogin;
-    }
+    public Integer getIsFirstLogin() { return isFirstLogin; }
+    public void setIsFirstLogin(Integer isFirstLogin) { this.isFirstLogin = isFirstLogin; }
 
-    public Integer getIsActive() {
-        return isActive;
-    }
+    public Integer getIsActive() { return isActive; }
+    public void setIsActive(Integer isActive) { this.isActive = isActive; }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public String getEmail() {
-        return email;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public String getPhone() {
-        return phone;
-    }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
 
-    public LocalDate getBirthDate() {
-        return birthDate;
-    }
+    public LocalDate getBirthDate() { return birthDate; }
+    public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
 
-    // Setters
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
+    public Position getPosition() { return position; }
+    public void setPosition(Position position) { this.position = position; }
 
-    public void setEmployeeCode(String employeeCode) {
-        this.employeeCode = employeeCode;
-    }
+    public Department getDepartment() { return department; }
+    public void setDepartment(Department department) { this.department = department; }
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+    // 관계 필드들의 Getter/Setter...
+    public List<Attendance> getAttendances() { return attendances; }
+    public void setAttendances(List<Attendance> attendances) { this.attendances = attendances; }
 
-    public void setJoinDate(LocalDate joinDate) {
-        this.joinDate = joinDate;
-    }
+    public List<Schedule> getSchedules() { return schedules; }
+    public void setSchedules(List<Schedule> schedules) { this.schedules = schedules; }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    public List<Task> getAssignedTasks() { return assignedTasks; }
+    public void setAssignedTasks(List<Task> assignedTasks) { this.assignedTasks = assignedTasks; }
 
-    public void setPositionId(Integer positionId) {
-        this.positionId = positionId;
-    }
+    public List<Task> getCreatedTasks() { return createdTasks; }
+    public void setCreatedTasks(List<Task> createdTasks) { this.createdTasks = createdTasks; }
 
-    public void setDepartmentId(Integer departmentId) {
-        this.departmentId = departmentId;
-    }
+    public List<LeaveRequest> getLeaves() { return leaves; }
+    public void setLeaves(List<LeaveRequest> leaves) { this.leaves = leaves; }
 
-    public void setRole(Role role) {
-        this.role = role;
-    }
+    public List<Message> getSentMessages() { return sentMessages; }
+    public void setSentMessages(List<Message> sentMessages) { this.sentMessages = sentMessages; }
 
-    public void setIsFirstLogin(Integer isFirstLogin) {
-        this.isFirstLogin = isFirstLogin;
-    }
-
-    public void setIsActive(Integer isActive) {
-        this.isActive = isActive;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public void setBirthDate(LocalDate birthDate) {
-        this.birthDate = birthDate;
-    }
-
-    // 편의 메서드 추가
-    public boolean isFirstLoginBoolean() {
-        return isFirstLogin != null && isFirstLogin == 1;
-    }
-
-    public boolean isActiveBoolean() {
-        return isActive != null && isActive == 1;
-    }
+    public List<Message> getReceivedMessages() { return receivedMessages; }
+    public void setReceivedMessages(List<Message> receivedMessages) { this.receivedMessages = receivedMessages; }
 
     @PrePersist
     protected void onCreate() {
@@ -211,17 +188,11 @@ public class User {
                 "userId=" + userId +
                 ", employeeCode='" + employeeCode + '\'' +
                 ", username='" + username + '\'' +
-                ", joinDate=" + joinDate +
+                ", email='" + email + '\'' +
+                ", role=" + role +
                 ", positionId=" + positionId +
                 ", departmentId=" + departmentId +
-                ", role=" + role +
-                ", isFirstLogin=" + isFirstLogin +
                 ", isActive=" + isActive +
-                ", createdAt=" + createdAt +
-                ", email='" + email + '\'' +
-                ", phone='" + phone + '\'' +
-                ", birthDate=" + birthDate +
                 '}';
     }
 }
-

@@ -1,7 +1,9 @@
 package com.example.companycoreserver.controller;
 
+import com.example.companycoreserver.dto.PasswordChangeRequest;
 import com.example.companycoreserver.dto.UserUpdateRequest;
 import com.example.companycoreserver.dto.UserUpdateResponse;
+import com.example.companycoreserver.service.UserService;
 import com.example.companycoreserver.service.UserUpdateService;
 import com.example.companycoreserver.util.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,11 +16,25 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin(origins = "*")
 public class UserUpdateController {
 
+
     @Autowired
     private UserUpdateService userUpdateService;
 
     @Autowired
     private JwtUtil jwtUtil;
+    // UserService 의존성 주입 추가
+    private final UserService userService;
+
+    // 생성자 주입 (권장)
+    public UserUpdateController(UserService userService) {
+        this.userService = userService;
+    }
+
+    private boolean isValidToken(String token) {
+        return true; // 현재 모든 토큰 허용
+        // return token != null && !token.trim().isEmpty();
+    }
+
 
     @PutMapping("/update")
     public ResponseEntity<UserUpdateResponse> updateUser(
@@ -122,4 +138,70 @@ public class UserUpdateController {
         }
         return null;
     }
+
+
+    // UserController.java에 추가
+    @PutMapping("/change-password")
+    public ResponseEntity<UserUpdateResponse> changePassword(
+            @RequestHeader("Authorization") String token,
+            @RequestBody PasswordChangeRequest request) {
+
+        try {
+            // 토큰 검증 (현재는 비활성화)
+            if (!isValidToken(token)) {
+                return ResponseEntity.status(401).body(
+                        new UserUpdateResponse(false, "Invalid token")
+                );
+            }
+
+            // 입력값 검증
+            if (request.getUserId() == null) {
+                return ResponseEntity.status(400).body(
+                        new UserUpdateResponse(false, "User ID is required")
+                );
+            }
+
+            if (request.getCurrentPassword() == null || request.getCurrentPassword().trim().isEmpty()) {
+                return ResponseEntity.status(400).body(
+                        new UserUpdateResponse(false, "Current password is required")
+                );
+            }
+
+            if (request.getNewPassword() == null || request.getNewPassword().trim().isEmpty()) {
+                return ResponseEntity.status(400).body(
+                        new UserUpdateResponse(false, "New password is required")
+                );
+            }
+
+            // 비밀번호 길이 검증
+            if (request.getNewPassword().length() < 6) {
+                return ResponseEntity.status(400).body(
+                        new UserUpdateResponse(false, "New password must be at least 6 characters")
+                );
+            }
+
+            // 비밀번호 변경 서비스 호출
+            boolean success = userService.changePassword(
+                    request.getUserId(),
+                    request.getCurrentPassword(),
+                    request.getNewPassword()
+            );
+
+            if (success) {
+                return ResponseEntity.ok(
+                        new UserUpdateResponse(true, "Password changed successfully")
+                );
+            } else {
+                return ResponseEntity.status(400).body(
+                        new UserUpdateResponse(false, "Current password is incorrect or user not found")
+                );
+            }
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(
+                    new UserUpdateResponse(false, "Password change failed: " + e.getMessage())
+            );
+        }
+    }
+
 }

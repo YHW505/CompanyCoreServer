@@ -93,7 +93,7 @@ public class AuthService {
             }
 
             // 3. JWT 토큰 생성
-            String token = jwtUtil.generateToken(employeeCode);
+            String token = jwtUtil.generateToken(employeeCode, user.getUserId());
             System.out.println("JWT 토큰 생성 성공");
 
             return token;
