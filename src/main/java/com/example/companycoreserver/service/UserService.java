@@ -21,6 +21,23 @@ public class UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    public User createUser(User user) {
+        // 비밀번호 암호화 (나중에 BCrypt 적용)
+         user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        // 기본값 설정
+        if (user.getIsActive() == null) {
+            user.setIsActive(1);
+        }
+        if (user.getRole() == null) {
+            user.setRole(Role.EMPLOYEE);
+        }
+        if (user.getJoinDate() == null) {
+            user.setJoinDate(LocalDate.now());
+        }
+
+        return userRepository.save(user);
+    }
     // 모든 사용자 조회
     public List<User> getAllUsers() {
         try {

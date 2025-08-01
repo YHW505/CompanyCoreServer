@@ -1,8 +1,7 @@
 package com.example.companycoreserver.controller;
 
-import com.example.companycoreserver.dto.PasswordChangeRequest;
-import com.example.companycoreserver.dto.UserUpdateRequest;
-import com.example.companycoreserver.dto.UserUpdateResponse;
+import com.example.companycoreserver.dto.*;
+import com.example.companycoreserver.entity.User;
 import com.example.companycoreserver.service.UserService;
 import com.example.companycoreserver.service.UserUpdateService;
 import com.example.companycoreserver.util.JwtUtil;
@@ -10,6 +9,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/user")
@@ -201,6 +202,32 @@ public class UserUpdateController {
             return ResponseEntity.status(500).body(
                     new UserUpdateResponse(false, "Password change failed: " + e.getMessage())
             );
+        }
+    }
+
+    @PatchMapping("/update-department-position/{userId}")
+    public ResponseEntity<?> updateUserDepartmentAndPosition(
+            @RequestHeader("Authorization") String token,
+            @PathVariable Long userId,
+            @RequestBody DeptPosiUpdateRequest request) {
+        try {
+            if (!isValidToken(token)) {
+                return ResponseEntity.status(401).build();
+            }
+
+            Optional<User> user = userService.getUserById(userId);
+            if (!user.isPresent()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            User updatedUser = userUpdateService.updateUserDepartmentAndPosition(
+                    userId, request.getDepartmentId(), request.getPositionId());
+            return ResponseEntity.ok(updatedUser);
+
+        } catch (Exception e) {
+            System.err.println("Error in updateUserDepartmentAndPosition: " + e.getMessage());
+            return ResponseEntity.status(500)
+                    .body("부서/직급 변경 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
 

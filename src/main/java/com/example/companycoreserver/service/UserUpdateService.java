@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.Optional;
 import java.util.regex.Pattern;
 
 @Service
@@ -288,5 +289,17 @@ public class UserUpdateService {
 
     private boolean isValidString(String str) {
         return str != null && !str.trim().isEmpty();
+    }
+
+    // 🔄 부서/직급 변경
+    public User updateUserDepartmentAndPosition(Long userId, Integer departmentId, Integer positionId) {
+        Optional<User> user = userRepository.findById(userId);
+        if (user.isPresent()) {
+            User userToUpdate = user.get();
+            userToUpdate.setDepartmentId(departmentId);
+            userToUpdate.setPositionId(positionId);
+            return userRepository.save(userToUpdate);
+        }
+        throw new RuntimeException("사용자를 찾을 수 없습니다.");
     }
 }

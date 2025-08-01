@@ -26,6 +26,34 @@ public class UserController {
         // return token != null && !token.trim().isEmpty();
     }
 
+    // 🆕 사용자 생성
+    @PostMapping("/create")
+    public ResponseEntity<?> registerUser(@RequestBody User user) {
+        try {
+            System.out.println("=== /users/register 요청 받음 ===");
+
+            // 이메일 중복 체크
+            if (userService.isEmailExists(user.getEmail())) {
+                return ResponseEntity.badRequest()
+                        .body("이미 존재하는 이메일입니다: " + user.getEmail());
+            }
+
+            // 사원번호 중복 체크
+            if (userService.isEmployeeIdExists(user.getEmployeeCode())) {
+                return ResponseEntity.badRequest()
+                        .body("이미 존재하는 사원번호입니다: " + user.getEmployeeCode());
+            }
+
+            User createdUser = userService.createUser(user);
+            return ResponseEntity.ok(createdUser);
+
+        } catch (Exception e) {
+            System.err.println("Error in registerUser: " + e.getMessage());
+            return ResponseEntity.status(500)
+                    .body("사용자 생성 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+
     // 🔍 모든 사용자 조회
     @GetMapping
     public ResponseEntity<List<User>> getAllUsers(
