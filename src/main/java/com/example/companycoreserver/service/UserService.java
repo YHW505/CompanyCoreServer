@@ -29,6 +29,9 @@ public class UserService {
         if (user.getIsActive() == null) {
             user.setIsActive(1);
         }
+        if(user.getIsFirstLogin() == null) {
+            user.setIsFirstLogin(1);
+        }
         if (user.getRole() == null) {
             user.setRole(Role.EMPLOYEE);
         }
