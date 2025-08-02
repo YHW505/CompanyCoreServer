@@ -20,6 +20,7 @@ public class UserInfo {
         private Long departmentId;
         private Long positionId;
         private LocalDate joinDate; // 추가
+        private String address; // ✅ 추가
 
         // 기본 생성자
         public CreateRequest() {
@@ -28,7 +29,7 @@ public class UserInfo {
         // 전체 생성자
         public CreateRequest(String employeeCode, String username, String email, String password,
                              String phone, LocalDate birthDate, String role, Long departmentId,
-                             Long positionId, LocalDate joinDate) {
+                             Long positionId, LocalDate joinDate, String address) {
             this.employeeCode = employeeCode;
             this.username = username;
             this.email = email;
@@ -39,6 +40,7 @@ public class UserInfo {
             this.departmentId = departmentId;
             this.positionId = positionId;
             this.joinDate = joinDate;
+            this.address = address;
         }
 
         // Getters & Setters
@@ -71,6 +73,9 @@ public class UserInfo {
 
         public LocalDate getJoinDate() { return joinDate; }
         public void setJoinDate(LocalDate joinDate) { this.joinDate = joinDate; }
+
+        public String getAddress() { return address; }
+        public void setAddress(String address) { this.address = address; }
     }
 
     /**
@@ -83,6 +88,8 @@ public class UserInfo {
         private LocalDate birthDate; // String -> LocalDate
         private Long departmentId;
         private Long positionId;
+        private String address; // ✅ 추가
+
 
         // 기본 생성자
         public UpdateRequest() {
@@ -90,13 +97,14 @@ public class UserInfo {
 
         // 전체 생성자
         public UpdateRequest(String username, String email, String phone, LocalDate birthDate,
-                             Long departmentId, Long positionId) {
+                             Long departmentId, Long positionId, String address) {
             this.username = username;
             this.email = email;
             this.phone = phone;
             this.birthDate = birthDate;
             this.departmentId = departmentId;
             this.positionId = positionId;
+            this.address = address;
         }
 
         // Getters & Setters
@@ -117,6 +125,9 @@ public class UserInfo {
 
         public Long getPositionId() { return positionId; }
         public void setPositionId(Long positionId) { this.positionId = positionId; }
+
+        public String getAddress() { return address; }
+        public void setAddress(String address) { this.address = address; }
     }
 
     /**
@@ -190,6 +201,8 @@ public class UserInfo {
         private Long departmentId; // 추가
         private String departmentName;
         private String positionName;
+        private String address; // ✅ 추가
+
 
         @JsonProperty("isFirstLogin")
         private Boolean isFirstLogin; // Integer -> Boolean
@@ -207,7 +220,7 @@ public class UserInfo {
         public Response(Long userId, String employeeCode, String username, LocalDate joinDate,
                         String email, String phone, LocalDate birthDate, String role,
                         Long positionId, Long departmentId, String departmentName, String positionName,
-                        Boolean isFirstLogin, Boolean isActive, LocalDateTime createdAt) {
+                        Boolean isFirstLogin, Boolean isActive, LocalDateTime createdAt, String address) {
             this.userId = userId;
             this.employeeCode = employeeCode;
             this.username = username;
@@ -223,6 +236,7 @@ public class UserInfo {
             this.isFirstLogin = isFirstLogin;
             this.isActive = isActive;
             this.createdAt = createdAt;
+            this.address = address;
         }
 
         // Getters & Setters
@@ -271,6 +285,9 @@ public class UserInfo {
         public LocalDateTime getCreatedAt() { return createdAt; }
         public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
+        public String getAddress() { return address; }
+        public void setAddress(String address) { this.address = address; }
+
         // 편의 메서드
         public boolean isFirstLoginBoolean() {
             return isFirstLogin != null && isFirstLogin;
@@ -295,6 +312,7 @@ public class UserInfo {
                     ", departmentId=" + departmentId +
                     ", departmentName='" + departmentName + '\'' +
                     ", positionName='" + positionName + '\'' +
+                    ", address='" + address + '\'' +
                     ", isFirstLogin=" + isFirstLogin +
                     ", isActive=" + isActive +
                     ", createdAt=" + createdAt +
@@ -313,6 +331,7 @@ public class UserInfo {
         private String email;
         private String departmentName;
         private String positionName;
+        private String address;
 
         @JsonProperty("isActive")
         private Boolean isActive; // Integer -> Boolean
@@ -326,7 +345,7 @@ public class UserInfo {
         // 전체 생성자
         public ListResponse(Long userId, String employeeCode, String username, LocalDate joinDate,
                             String email, String departmentName, String positionName,
-                            Boolean isActive, LocalDateTime createdAt) {
+                            Boolean isActive, LocalDateTime createdAt, String address) {
             this.userId = userId;
             this.employeeCode = employeeCode;
             this.username = username;
@@ -336,6 +355,7 @@ public class UserInfo {
             this.positionName = positionName;
             this.isActive = isActive;
             this.createdAt = createdAt;
+            this.address = address;
         }
 
         // Getters & Setters
@@ -365,6 +385,9 @@ public class UserInfo {
 
         public LocalDateTime getCreatedAt() { return createdAt; }
         public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+        public String getAddress() { return address; }
+        public void setAddress(String address) { this.address = address; }
 
         // 편의 메서드
         public boolean isActiveBoolean() {
@@ -456,6 +479,8 @@ public class UserInfo {
         private Integer size = 10;
         private String sortBy = "createdAt";
         private String sortDirection = "DESC";
+        private String addressKeyword; // ✅ 주소 검색용 추가 (선택사항)
+
 
         // 기본 생성자
         public SearchCondition() {
@@ -464,7 +489,7 @@ public class UserInfo {
         // 전체 생성자
         public SearchCondition(String keyword, Long departmentId, String role, Boolean isActive,
                                LocalDate startDate, LocalDate endDate, Integer page, Integer size,
-                               String sortBy, String sortDirection) {
+                               String sortBy, String sortDirection, String addressKeyword) {
             this.keyword = keyword;
             this.departmentId = departmentId;
             this.role = role;
@@ -475,6 +500,7 @@ public class UserInfo {
             this.size = size;
             this.sortBy = sortBy;
             this.sortDirection = sortDirection;
+            this.addressKeyword = addressKeyword;
         }
 
         // Getters & Setters
@@ -507,6 +533,9 @@ public class UserInfo {
 
         public String getSortDirection() { return sortDirection; }
         public void setSortDirection(String sortDirection) { this.sortDirection = sortDirection; }
+
+        public String getAddressKeyword() { return addressKeyword; }
+        public void setAddressKeyword(String addressKeyword) { this.addressKeyword = addressKeyword; }
     }
 
     /**

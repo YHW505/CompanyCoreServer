@@ -60,6 +60,9 @@ public class User {
     @Column(name = "birth_date")
     private LocalDate birthDate;
 
+    @Column(name = "address", length = 500)
+    private String address;
+
     // 🔗 관계 매핑
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "position_id", insertable = false, updatable = false)
@@ -178,6 +181,9 @@ public class User {
 
     public List<Message> getReceivedMessages() { return receivedMessages; }
     public void setReceivedMessages(List<Message> receivedMessages) { this.receivedMessages = receivedMessages; }
+
+    public String getAddress() { return address; }
+    public void setAddress(String address) { this.address = address; }
 
     @PrePersist
     protected void onCreate() {

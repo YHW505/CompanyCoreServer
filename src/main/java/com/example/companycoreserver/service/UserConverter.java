@@ -26,17 +26,18 @@ public class UserConverter {
             userInfo.setUsername(user.getUsername());
             userInfo.setEmail(user.getEmail());
             userInfo.setPhone(user.getPhone());
+            userInfo.setAddress(user.getAddress()); // ✅ 주소 추가
 
             // 날짜 필드 (LocalDate 그대로 사용)
             userInfo.setBirthDate(user.getBirthDate());
-            userInfo.setJoinDate(user.getJoinDate()); // ✅ 추가
+            userInfo.setJoinDate(user.getJoinDate());
 
             // Enum 필드 변환 (Role enum -> String)
             if (user.getRole() != null) {
                 userInfo.setRole(user.getRole().toString());
             }
 
-            // ID 필드 추가 ✅
+            // ID 필드 추가
             if (user.getDepartmentId() != null) {
                 userInfo.setDepartmentId(Long.valueOf(user.getDepartmentId()));
             }
@@ -48,11 +49,11 @@ public class UserConverter {
             userInfo.setDepartmentName(getDepartmentName(user));
             userInfo.setPositionName(getPositionName(user));
 
-            // Boolean 필드로 변환 ✅
+            // Boolean 필드로 변환
             userInfo.setIsFirstLogin(convertIntegerToBoolean(user.getIsFirstLogin()));
             userInfo.setIsActive(convertIntegerToBoolean(user.getIsActive()));
 
-            // 생성일시 (LocalDateTime 그대로 사용) ✅
+            // 생성일시 (LocalDateTime 그대로 사용)
             userInfo.setCreatedAt(user.getCreatedAt());
 
         } catch (Exception e) {
@@ -66,6 +67,7 @@ public class UserConverter {
 
     /**
      * User 엔티티를 UserInfo.ListResponse DTO로 변환 (목록용)
+     * ✅ 목록에서도 주소가 필요하다면 추가 가능 (현재는 추가하지 않음)
      */
     public UserInfo.ListResponse convertToListResponse(User user) {
         if (user == null) {
@@ -78,12 +80,15 @@ public class UserConverter {
             listResponse.setUserId(user.getUserId());
             listResponse.setEmployeeCode(user.getEmployeeCode());
             listResponse.setUsername(user.getUsername());
-            listResponse.setJoinDate(user.getJoinDate()); // ✅ 추가
+            listResponse.setJoinDate(user.getJoinDate());
             listResponse.setEmail(user.getEmail());
             listResponse.setDepartmentName(getDepartmentName(user));
             listResponse.setPositionName(getPositionName(user));
-            listResponse.setIsActive(convertIntegerToBoolean(user.getIsActive())); // ✅ Boolean 변환
-            listResponse.setCreatedAt(user.getCreatedAt()); // ✅ LocalDateTime 그대로
+            listResponse.setIsActive(convertIntegerToBoolean(user.getIsActive()));
+            listResponse.setCreatedAt(user.getCreatedAt());
+
+            // ✅ 목록에서도 주소를 표시하려면 아래 주석 해제
+            // listResponse.setAddress(user.getAddress());
 
         } catch (Exception e) {
             System.err.println("User ListResponse 변환 중 오류 발생: " + e.getMessage());
@@ -96,6 +101,7 @@ public class UserConverter {
 
     /**
      * User 엔티티를 UserInfo.LoginResponse DTO로 변환 (로그인용)
+     * ✅ 로그인 응답에는 주소 불필요
      */
     public UserInfo.LoginResponse convertToLoginResponse(User user, String accessToken, String refreshToken, Long tokenExpiresIn) {
         if (user == null) {
@@ -110,7 +116,7 @@ public class UserConverter {
             loginResponse.setUsername(user.getUsername());
             loginResponse.setEmail(user.getEmail());
             loginResponse.setRole(user.getRole() != null ? user.getRole().toString() : null);
-            loginResponse.setIsFirstLogin(convertIntegerToBoolean(user.getIsFirstLogin())); // ✅ Boolean 변환
+            loginResponse.setIsFirstLogin(convertIntegerToBoolean(user.getIsFirstLogin()));
             loginResponse.setAccessToken(accessToken);
             loginResponse.setRefreshToken(refreshToken);
             loginResponse.setTokenExpiresIn(tokenExpiresIn);
@@ -140,10 +146,11 @@ public class UserConverter {
             user.setEmail(request.getEmail());
             user.setPassword(request.getPassword()); // 실제로는 암호화 필요
             user.setPhone(request.getPhone());
+            user.setAddress(request.getAddress()); // ✅ 주소 추가
 
-            // 날짜 필드 (LocalDate 그대로 사용) ✅
+            // 날짜 필드 (LocalDate 그대로 사용)
             user.setBirthDate(request.getBirthDate());
-            user.setJoinDate(request.getJoinDate() != null ? request.getJoinDate() : LocalDate.now()); // ✅
+            user.setJoinDate(request.getJoinDate() != null ? request.getJoinDate() : LocalDate.now());
 
             // Role enum 변환
             if (request.getRole() != null) {
@@ -189,7 +196,10 @@ public class UserConverter {
             if (request.getPhone() != null) {
                 user.setPhone(request.getPhone());
             }
-            // LocalDate 그대로 사용 ✅
+            if (request.getAddress() != null) { // ✅ 주소 업데이트 추가
+                user.setAddress(request.getAddress());
+            }
+            // LocalDate 그대로 사용
             if (request.getBirthDate() != null) {
                 user.setBirthDate(request.getBirthDate());
             }
@@ -248,7 +258,7 @@ public class UserConverter {
     }
 
     /**
-     * Integer를 Boolean으로 변환 (DB TINYINT -> Boolean) ✅
+     * Integer를 Boolean으로 변환 (DB TINYINT -> Boolean)
      */
     private Boolean convertIntegerToBoolean(Integer value) {
         if (value == null) {
@@ -258,7 +268,7 @@ public class UserConverter {
     }
 
     /**
-     * Boolean을 Integer로 변환 (Boolean -> DB TINYINT) ✅
+     * Boolean을 Integer로 변환 (Boolean -> DB TINYINT)
      */
     private Integer convertBooleanToInteger(Boolean value) {
         if (value == null) {
@@ -268,7 +278,7 @@ public class UserConverter {
     }
 
     /**
-     * StatusChangeRequest를 User 엔티티에 적용 ✅
+     * StatusChangeRequest를 User 엔티티에 적용
      */
     public void updateUserStatus(User user, UserInfo.StatusChangeRequest request) {
         if (user == null || request == null) {
@@ -288,14 +298,14 @@ public class UserConverter {
     }
 
     /**
-     * SearchCondition의 Boolean을 Integer로 변환하여 검색 조건 생성 ✅
+     * SearchCondition의 Boolean을 Integer로 변환하여 검색 조건 생성
      */
     public Integer convertSearchActiveCondition(Boolean isActive) {
         return convertBooleanToInteger(isActive);
     }
 
     /**
-     * 페이징된 사용자 목록을 PagedResponse로 변환 ✅
+     * 페이징된 사용자 목록을 PagedResponse로 변환
      */
     public UserInfo.PagedResponse convertToPagedResponse(
             org.springframework.data.domain.Page<User> userPage) {
@@ -325,5 +335,25 @@ public class UserConverter {
             e.printStackTrace();
             return null;
         }
+    }
+
+    // ✅ 주소 검색 조건 처리를 위한 헬퍼 메서드 (선택사항)
+    /**
+     * 주소 검색 키워드가 있는지 확인
+     */
+    public boolean hasAddressSearchCondition(UserInfo.SearchCondition condition) {
+        return condition != null &&
+                condition.getAddressKeyword() != null &&
+                !condition.getAddressKeyword().trim().isEmpty();
+    }
+
+    /**
+     * 주소 검색 키워드를 LIKE 패턴으로 변환
+     */
+    public String convertAddressSearchPattern(String addressKeyword) {
+        if (addressKeyword == null || addressKeyword.trim().isEmpty()) {
+            return null;
+        }
+        return "%" + addressKeyword.trim() + "%";
     }
 }

@@ -155,7 +155,7 @@ public class UserUpdateService {
         }
     }
 
-    // ✅ 기존 private 메서드들 (변경 없음)
+    // ✅ 기존 private 메서드들 (주소 업데이트 로직 추가)
     private void updateBasicInfo(User user, UserUpdateRequest request) {
         // 사용자명 업데이트
         if (isValidString(request.getUsername())) {
@@ -193,6 +193,19 @@ public class UserUpdateService {
             }
 
             user.setPhone(phone);
+        }
+
+        // ✅ 주소 업데이트 추가
+        if (isValidString(request.getAddress())) {
+            String address = request.getAddress().trim();
+
+            // 주소 길이 검증
+            if (address.length() > 500) {
+                throw new RuntimeException("주소는 500자 이하로 입력해주세요.");
+            }
+
+            user.setAddress(address);
+            logger.info("주소 업데이트 완료 - userId: {}", user.getUserId());
         }
 
         // 생년월일 업데이트
@@ -301,5 +314,42 @@ public class UserUpdateService {
             return userRepository.save(userToUpdate);
         }
         throw new RuntimeException("사용자를 찾을 수 없습니다.");
+    }
+
+    // ✅ 주소만 별도로 업데이트하는 메서드 (선택사항)
+    /**
+     * 사용자 주소만 업데이트
+     */
+    public UserUpdateResponse updateUserAddress(Long userId, String address) {
+        try {
+            logger.info("사용자 주소 업데이트 시작 - userId: {}", userId);
+
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+            // 주소 유효성 검사
+            if (address != null) {
+                String trimmedAddress = address.trim();
+                if (trimmedAddress.length() > 500) {
+                    throw new RuntimeException("주소는 500자 이하로 입력해주세요.");
+                }
+                user.setAddress(trimmedAddress);
+            } else {
+                user.setAddress(null); // 주소 삭제
+            }
+
+            User updatedUser = userRepository.save(user);
+            UserInfo.Response userInfo = userConverter.convertToUserInfo(updatedUser);
+
+            logger.info("사용자 주소 업데이트 완료 - userId: {}", userId);
+            return new UserUpdateResponse(true, "주소가 성공적으로 업데이트되었습니다.", userInfo);
+
+        } catch (RuntimeException e) {
+            logger.error("사용자 주소 업데이트 실패 - userId: {}, error: {}", userId, e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.error("사용자 주소 업데이트 중 예상치 못한 오류 - userId: {}", userId, e);
+            throw new RuntimeException("사용자 주소 업데이트 중 오류가 발생했습니다: " + e.getMessage());
+        }
     }
 }
