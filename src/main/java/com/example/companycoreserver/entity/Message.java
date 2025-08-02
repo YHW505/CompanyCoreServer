@@ -1,15 +1,21 @@
 package com.example.companycoreserver.entity;
 
+import com.example.companycoreserver.entity.Enum.MessageType;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.awt.*;
+
 import java.time.LocalDateTime;
+
+import com.example.companycoreserver.entity.Enum.MessageType;
+
 
 @Entity
 @Table(name = "messages")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Message {
+
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,10 +28,9 @@ public class Message {
     @Column(name = "receiver_id")
     private Long receiverId;
 
-    // MessageType enum이 있다면 import해서 사용
-     @Enumerated(EnumType.STRING)
-     @Column(name = "message_type")
-     private TrayIcon.MessageType messageType;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "message_type")
+    private MessageType messageType;
 
     @Column(name = "title", length = 255)
     private String title;
@@ -49,10 +54,11 @@ public class Message {
     private User receiver;
 
     // 기본 생성자
-    public Message() {}
+    public Message() {
+    }
 
     // 생성자
-    public Message(Long senderId, Long receiverId, TrayIcon.MessageType messageType,
+    public Message(Long senderId, Long receiverId, MessageType messageType,
                    String title, String content) {
         this.senderId = senderId;
         this.receiverId = receiverId;
@@ -62,35 +68,85 @@ public class Message {
     }
 
     // Getter/Setter
-    public Integer getMessageId() { return messageId; }
-    public void setMessageId(Integer messageId) { this.messageId = messageId; }
+    public Integer getMessageId() {
+        return messageId;
+    }
 
-    public Long getSenderId() { return senderId; }
-    public void setSenderId(Long senderId) { this.senderId = senderId; }
+    public void setMessageId(Integer messageId) {
+        this.messageId = messageId;
+    }
 
-    public Long getReceiverId() { return receiverId; }
-    public void setReceiverId(Long receiverId) { this.receiverId = receiverId; }
+    public Long getSenderId() {
+        return senderId;
+    }
 
-    public TrayIcon.MessageType getMessageType() { return messageType; }
-    public void setMessageType(TrayIcon.MessageType messageType) { this.messageType = messageType; }
+    public void setSenderId(Long senderId) {
+        this.senderId = senderId;
+    }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public Long getReceiverId() {
+        return receiverId;
+    }
 
-    public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
+    public void setReceiverId(Long receiverId) {
+        this.receiverId = receiverId;
+    }
 
-    public Boolean getIsRead() { return isRead; }
-    public void setIsRead(Boolean isRead) { this.isRead = isRead; }
+    public MessageType getMessageType() {
+        return messageType;
+    }
 
-    public LocalDateTime getSentAt() { return sentAt; }
-    public void setSentAt(LocalDateTime sentAt) { this.sentAt = sentAt; }
+    public void setMessageType(MessageType messageType) {
+        this.messageType = messageType;
+    }
 
-    public User getSender() { return sender; }
-    public void setSender(User sender) { this.sender = sender; }
+    public String getTitle() {
+        return title;
+    }
 
-    public User getReceiver() { return receiver; }
-    public void setReceiver(User receiver) { this.receiver = receiver; }
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public Boolean getIsRead() {
+        return isRead;
+    }
+
+    public void setIsRead(Boolean isRead) {
+        this.isRead = isRead;
+    }
+
+    public LocalDateTime getSentAt() {
+        return sentAt;
+    }
+
+    public void setSentAt(LocalDateTime sentAt) {
+        this.sentAt = sentAt;
+    }
+
+    public User getSender() {
+        return sender;
+    }
+
+    public void setSender(User sender) {
+        this.sender = sender;
+    }
+
+    public User getReceiver() {
+        return receiver;
+    }
+
+    public void setReceiver(User receiver) {
+        this.receiver = receiver;
+    }
 
     @PrePersist
     protected void onCreate() {

@@ -47,6 +47,15 @@ public class LeaveRequest {
     @Column(name = "applied_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime appliedAt;
 
+    @Column(name = "rejected_by")
+    private Long rejectedBy;
+
+    @Column(name = "rejection_reason")
+    private String rejectionReason;
+
+    @Column(name = "rejected_at")
+    private LocalDateTime rejectedAt;
+
     // 🔗 관계 매핑
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
@@ -55,6 +64,7 @@ public class LeaveRequest {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approved_by", insertable = false, updatable = false)
     private User approver;
+
 
     // 기본 생성자
     public LeaveRequest() {
@@ -166,6 +176,30 @@ public class LeaveRequest {
 
     public void setApprover(User approver) {
         this.approver = approver;
+    }
+
+    public Long getRejectedBy() {
+        return rejectedBy;
+    }
+
+    public void setRejectedBy(Long rejectedBy) {
+        this.rejectedBy = rejectedBy;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
+    }
+
+    public LocalDateTime getRejectedAt() {
+        return rejectedAt;
+    }
+
+    public void setRejectedAt(LocalDateTime rejectedAt) {
+        this.rejectedAt = rejectedAt;
     }
 
     @PrePersist

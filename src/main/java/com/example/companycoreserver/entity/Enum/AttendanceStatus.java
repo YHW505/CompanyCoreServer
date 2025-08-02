@@ -6,5 +6,4 @@ public enum AttendanceStatus {
     ABSENT,       // 결근
     LATE,         // 지각
     EARLY_LEAVE,  // 조퇴
-    HALF_DAY      // 반차
 }

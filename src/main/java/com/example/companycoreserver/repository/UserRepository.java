@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -39,6 +40,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     // Service에서 사용하는 메서드명과 일치하도록 추가
     @Query("SELECT u FROM User u WHERE u.username LIKE %:name%")
     List<User> findByNameContaining(@Param("name") String name);
+
+    @Query("SELECT u FROM User u " +
+            "LEFT JOIN FETCH u.department " +
+            "LEFT JOIN FETCH u.position " +
+            "WHERE u.userId = :userId")
+    Optional<User> findByIdWithDetails(@Param("userId") Long userId);
 
     // 부서ID와 직급ID로 조회
     List<User> findByDepartmentIdAndPositionId(Integer departmentId, Integer positionId);
@@ -123,7 +130,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     // 기타 메서드들
     List<User> findByBirthDate(LocalDate birthDate);
+
     Optional<User> findByPhone(String phone);
+
     Optional<User> findByUsername(String username);
 
     // 첫 로그인 여부로 조회

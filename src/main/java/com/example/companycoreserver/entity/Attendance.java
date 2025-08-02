@@ -1,6 +1,7 @@
 package com.example.companycoreserver.entity;
 
 import com.example.companycoreserver.entity.Enum.AttendanceStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -28,7 +29,7 @@ public class Attendance {
     private LocalDateTime checkOut;
 
     @Column(name = "work_hours", precision = 5, scale = 2)
-    private BigDecimal workHours;
+    private String workHours;
 
     @Column(name = "work_date")
     private LocalDate workDate;
@@ -40,6 +41,7 @@ public class Attendance {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @JsonIgnore
     private User user;
 
     // 기본 생성자
@@ -47,7 +49,7 @@ public class Attendance {
 
     // 생성자
     public Attendance(Long userId, LocalDateTime checkIn, LocalDateTime checkOut,
-                      BigDecimal workHours, LocalDate workDate) {
+                      String workHours, LocalDate workDate) {
         this.userId = userId;
         this.checkIn = checkIn;
         this.checkOut = checkOut;
@@ -68,8 +70,11 @@ public class Attendance {
     public LocalDateTime getCheckOut() { return checkOut; }
     public void setCheckOut(LocalDateTime checkOut) { this.checkOut = checkOut; }
 
-    public BigDecimal getWorkHours() { return workHours; }
-    public void setWorkHours(BigDecimal workHours) { this.workHours = workHours; }
+    public String getWorkHours() { return workHours; }
+    public void setWorkHours(String workHours) { this.workHours = workHours; }
+
+    public AttendanceStatus getStatus() { return status; }
+    public void setStatus(AttendanceStatus status) { this.status= status; }
 
     public LocalDate getWorkDate() { return workDate; }
     public void setWorkDate(LocalDate workDate) { this.workDate = workDate; }

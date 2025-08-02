@@ -32,12 +32,14 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/api/**").permitAll()  // 모든 API 허용
-                        .requestMatchers("/api/auth/**").permitAll()  // 로그인 관련
-                        .requestMatchers("/api/users/create").permitAll()
-                        .requestMatchers("/api/users/**").authenticated()  // 사용자 관련 - 인증 필요
-                        .requestMatchers("/api/users/first-login").authenticated()  // 첫 로그인 업데이트
-                        .anyRequest().authenticated()
+//                        .requestMatchers("/api/**").permitAll()  // 모든 API 허용
+//                        .requestMatchers("/api/auth/**").permitAll()  // 로그인 관련
+//                        .requestMatchers("/api/users/create").permitAll()
+//                        .requestMatchers("/api/users/**").authenticated()  // 사용자 관련 - 인증 필요
+//                        .requestMatchers("/api/users/first-login").authenticated()  // 첫 로그인 업데이트
+                                .requestMatchers("/api/**").permitAll() // API 경로 모두 허용
+                                .requestMatchers("/error").permitAll()   // 에러 페이지 허용
+                                .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
