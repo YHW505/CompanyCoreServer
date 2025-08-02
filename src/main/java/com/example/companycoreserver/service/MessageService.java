@@ -215,7 +215,7 @@ public class MessageService {
         // 타입별 통계
         long messageCount = receivedMessages.stream().filter(m -> m.getMessageType() == MessageType.MESSAGE).count();
         long emailCount = receivedMessages.stream().filter(m -> m.getMessageType() == MessageType.EMAIL).count();
-        long noticeCount = receivedMessages.stream().filter(m -> m.getMessageType() == MessageType.NOTICE).count();
+//        long noticeCount = receivedMessages.stream().filter(m -> m.getMessageType() == MessageType.NOTICE).count();
 
         // 최근 읽지 않은 메시지 (DTO로 변환)
         List<MessageSummaryResponse> recentMessages = unreadMessages.stream()
@@ -237,7 +237,7 @@ public class MessageService {
         dashboard.put("todayReceivedCount", todayReceived.size());
         dashboard.put("messageTypeCount", messageCount);
         dashboard.put("emailTypeCount", emailCount);
-        dashboard.put("noticeTypeCount", noticeCount);
+//        dashboard.put("noticeTypeCount", noticeCount);
         dashboard.put("recentMessages", recentMessages);
         dashboard.put("statistics", statistics);
 
@@ -339,11 +339,11 @@ public class MessageService {
     }
 
     // 공지사항 조회
-    public List<MessageSummaryResponse> getNotices() {
-        return messageRepository.findAll().stream()
-                .filter(m -> m.getMessageType() == MessageType.NOTICE)
-                .sorted((m1, m2) -> m2.getSentAt().compareTo(m1.getSentAt()))
-                .map(this::convertToMessageSummaryResponse)
-                .collect(Collectors.toList());
-    }
+//    public List<MessageSummaryResponse> getNotices() {
+//        return messageRepository.findAll().stream()
+//                .filter(m -> m.getMessageType() == MessageType.NOTICE)
+//                .sorted((m1, m2) -> m2.getSentAt().compareTo(m1.getSentAt()))
+//                .map(this::convertToMessageSummaryResponse)
+//                .collect(Collectors.toList());
+//    }
 }
