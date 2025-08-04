@@ -2,6 +2,7 @@ package com.example.companycoreserver.dto;
 
 import com.example.companycoreserver.entity.Notice;
 import java.time.LocalDateTime;
+import java.util.Base64;
 
 public class NoticeResponse {
     private Long id;
@@ -13,6 +14,7 @@ public class NoticeResponse {
     private Boolean hasAttachments; // ✨ 동적으로 계산됨
     private String attachmentFilename;
     private String attachmentContentType;
+    private String attachmentContent; // 🆕 첨부파일 내용 (Base64 인코딩)
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -32,6 +34,11 @@ public class NoticeResponse {
         if (notice.hasAttachment()) {
             this.attachmentFilename = notice.getAttachmentFilename();
             this.attachmentContentType = notice.getAttachmentContentType();
+            
+            // 🆕 첨부파일 내용을 Base64로 인코딩하여 설정
+            if (notice.getAttachmentFile() != null && notice.getAttachmentFile().length > 0) {
+                this.attachmentContent = Base64.getEncoder().encodeToString(notice.getAttachmentFile());
+            }
         }
 
         this.createdAt = notice.getCreatedAt();
@@ -42,7 +49,7 @@ public class NoticeResponse {
     public NoticeResponse(Long id, String title, String content, Long authorId,
                           String authorName, String authorDepartment, Boolean hasAttachments,
                           String attachmentFilename, String attachmentContentType,
-                          LocalDateTime createdAt, LocalDateTime updatedAt) {
+                          String attachmentContent, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.title = title;
         this.content = content;
@@ -52,6 +59,7 @@ public class NoticeResponse {
         this.hasAttachments = hasAttachments;
         this.attachmentFilename = attachmentFilename;
         this.attachmentContentType = attachmentContentType;
+        this.attachmentContent = attachmentContent;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -85,6 +93,9 @@ public class NoticeResponse {
 
     public String getAttachmentContentType() { return attachmentContentType; }
     public void setAttachmentContentType(String attachmentContentType) { this.attachmentContentType = attachmentContentType; }
+    
+    public String getAttachmentContent() { return attachmentContent; }
+    public void setAttachmentContent(String attachmentContent) { this.attachmentContent = attachmentContent; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

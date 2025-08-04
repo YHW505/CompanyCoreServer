@@ -30,6 +30,12 @@ public class NoticeService {
 
     // ✅ Entity를 Response DTO로 변환하는 메서드 (size 제외)
     private NoticeResponse convertToResponse(Notice notice) {
+        // 🆕 첨부파일 내용을 Base64로 인코딩
+        String attachmentContent = null;
+        if (notice.hasAttachment() && notice.getAttachmentFile() != null && notice.getAttachmentFile().length > 0) {
+            attachmentContent = java.util.Base64.getEncoder().encodeToString(notice.getAttachmentFile());
+        }
+        
         return new NoticeResponse(
                 notice.getId(),
                 notice.getTitle(),
@@ -40,6 +46,7 @@ public class NoticeService {
                 notice.hasAttachment(),                    // 첨부파일 여부
                 notice.getAttachmentFilename(),            // 파일명
                 notice.getAttachmentContentType(),         // MIME 타입
+                attachmentContent,                         // 🆕 첨부파일 내용 (Base64)
                 notice.getCreatedAt(),
                 notice.getUpdatedAt()
         );
