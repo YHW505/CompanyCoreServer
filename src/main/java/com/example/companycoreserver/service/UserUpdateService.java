@@ -7,6 +7,7 @@ import com.example.companycoreserver.entity.User;
 import com.example.companycoreserver.repository.UserRepository;
 import com.example.companycoreserver.service.UserConverter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -99,6 +100,7 @@ public class UserUpdateService {
             throw new RuntimeException("사용자 정보 조회 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
+
     /**
      * 첫 로그인 상태만 업데이트
      */
@@ -317,6 +319,7 @@ public class UserUpdateService {
     }
 
     // ✅ 주소만 별도로 업데이트하는 메서드 (선택사항)
+
     /**
      * 사용자 주소만 업데이트
      */
@@ -352,4 +355,26 @@ public class UserUpdateService {
             throw new RuntimeException("사용자 주소 업데이트 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
+
+    @Transactional
+    public UserUpdateResponse deleteUser(Long userId) {
+        try {
+            Optional<User> userOptional = userRepository.findById(userId);
+            if (!userOptional.isPresent()) {
+                return new UserUpdateResponse(false, "사용자를 찾을 수 없습니다.");
+            }
+
+            // CASCADE 하드 삭제 - 연관된 모든 데이터가 자동으로 삭제됨
+            userRepository.deleteById(userId);
+
+            return new UserUpdateResponse(true, "사용자가 성공적으로 삭제되었습니다.");
+
+        } catch (DataIntegrityViolationException e) {
+            return new UserUpdateResponse(false, "참조 무결성 제약으로 인해 삭제할 수 없습니다.");
+        } catch (Exception e) {
+            return new UserUpdateResponse(false, "사용자 삭제 중 오류가 발생했습니다: " + e.getMessage());
+        }
+    }
+
+
 }

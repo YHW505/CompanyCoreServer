@@ -231,4 +231,56 @@ public class UserUpdateController {
         }
     }
 
+
+    @DeleteMapping("/delete/{userId}")
+    public ResponseEntity<UserUpdateResponse> deleteUser(
+            @RequestHeader("Authorization") String token,
+            @PathVariable Long userId,
+            HttpServletRequest httpRequest) {
+
+        try {
+            // 토큰 검증
+            String jwtToken = extractTokenFromRequest(httpRequest);
+            if (jwtToken == null) {
+                return ResponseEntity.badRequest()
+                        .body(new UserUpdateResponse(false, "인증 토큰이 없습니다."));
+            }
+
+            Long requestUserId = jwtUtil.getUserIdFromToken(jwtToken);
+            if (requestUserId == null) {
+                return ResponseEntity.badRequest()
+                        .body(new UserUpdateResponse(false, "유효하지 않은 토큰입니다."));
+            }
+
+            // 관리자만 다른 사용자 삭제 가능하도록 제한
+//            if (!requestUserId.equals(userId)) {
+                // 여기에 관리자 권한 체크 로직 추가
+                // if (!requestUser.get().isAdmin()) {
+                //     return ResponseEntity.status(403)
+                //             .body(new UserUpdateResponse(false, "다른 사용자를 삭제할 권한이 없습니다."));
+                // }
+//            }
+
+
+            // 자기 자신은 삭제할 수 없도록 제한
+            if (requestUserId.equals(userId)) {
+                return ResponseEntity.badRequest()
+                        .body(new UserUpdateResponse(false, "자기 자신은 삭제할 수 없습니다."));
+            }
+
+            // 사용자 삭제 실행
+            UserUpdateResponse response = userUpdateService.deleteUser(userId);
+
+            if (response.isSuccess()) {
+                return ResponseEntity.ok(response);
+            } else {
+                return ResponseEntity.badRequest().body(response);
+            }
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body(new UserUpdateResponse(false, "사용자 삭제 중 오류가 발생했습니다: " + e.getMessage()));
+        }
+    }
+
 }
