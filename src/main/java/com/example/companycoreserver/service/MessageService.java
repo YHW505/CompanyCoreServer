@@ -30,20 +30,24 @@ public class MessageService {
 
     // ✅ 1. 메시지 전송
     public MessageResponse sendMessage(MessageRequest request, Long senderId) {
+        // ✅ 발신자는 ID로 조회 (헤더에서 받은 값)
         User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new RuntimeException("발신자를 찾을 수 없습니다"));
 
-        User receiver = userRepository.findById(request.getReceiverId())
+        // ✅ 수신자는 이메일로 조회 (DTO에서 받은 값)
+        User receiver = userRepository.findByEmail(request.getReceiverEmail())
                 .orElseThrow(() -> new RuntimeException("수신자를 찾을 수 없습니다"));
 
         MessageType messageType = MessageType.valueOf(request.getMessageType());
 
-        Message message = new Message(senderId, request.getReceiverId(), messageType,
+        // ✅ 실제 ID 값들로 메시지 생성
+        Message message = new Message(senderId, receiver.getUserId(), messageType,
                 request.getTitle(), request.getContent());
 
         Message savedMessage = messageRepository.save(message);
         return convertToMessageResponse(savedMessage, sender, receiver);
     }
+
 
     // ✅ 2. 메시지 조회 (통합) - 새로 추가된 메서드
     public List<MessageSummaryResponse> getMessages(Long userId, String type, String messageType,

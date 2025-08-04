@@ -2,7 +2,7 @@ package com.example.companycoreserver.dto;
 
 
 public class MessageRequest {
-    private Long receiverId;
+    private String receiverEmail;
     private String messageType;
     private String title;
     private String content;
@@ -11,20 +11,20 @@ public class MessageRequest {
     public MessageRequest() {}
 
     // 전체 생성자
-    public MessageRequest(Long receiverId, String messageType, String title, String content) {
-        this.receiverId = receiverId;
+    public MessageRequest(String receiverEmail, String messageType, String title, String content) {
+        this.receiverEmail = receiverEmail;
         this.messageType = messageType;
         this.title = title;
         this.content = content;
     }
 
     // Getter & Setter
-    public Long getReceiverId() {
-        return receiverId;
+    public String getReceiverEmail() {
+        return receiverEmail;
     }
 
-    public void setReceiverId(Long receiverId) {
-        this.receiverId = receiverId;
+    public void getReceiverEmail(String receiverId) {
+        this.receiverEmail = receiverId;
     }
 
     public String getMessageType() {
