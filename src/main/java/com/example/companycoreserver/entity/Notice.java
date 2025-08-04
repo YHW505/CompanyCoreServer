@@ -1,8 +1,6 @@
 package com.example.companycoreserver.entity;
-import jakarta.persistence.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
@@ -19,38 +17,78 @@ public class Notice {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "author_id", nullable = false)
+    @Column(nullable = false)
     private Long authorId;
 
-    @Column(name = "author_name", nullable = false, length = 100)
+    @Column(nullable = false, length = 50)
     private String authorName;
 
-    @Column(name = "author_department", length = 100)
+    @Column(nullable = false, length = 50)
     private String authorDepartment;
 
-    @Column(name = "has_attachments")
-    private Boolean hasAttachments = false;
+    // 첨부파일 관련 필드들
+    @Column(length = 255)
+    private String attachmentFilename;
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(length = 100)
+    private String attachmentContentType;
+
+    @Column
+    private Long attachmentSize;
+
+    @Lob
+    @Column(columnDefinition = "LONGBLOB")
+    private byte[] attachmentFile;
+
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    @UpdateTimestamp
-    @Column(name = "updated_at")
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
     // 기본 생성자
-    public Notice() {}
+    public Notice() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
 
-    // 모든 필드 생성자
-    public Notice(String title, String content, Long authorId,
-                  String authorName, String authorDepartment, Boolean hasAttachments) {
+    // 생성자
+    public Notice(String title, String content, Long authorId, String authorName, String authorDepartment) {
+        this();
         this.title = title;
         this.content = content;
         this.authorId = authorId;
         this.authorName = authorName;
         this.authorDepartment = authorDepartment;
-        this.hasAttachments = hasAttachments != null ? hasAttachments : false;
+    }
+
+    // ✅ 기본 정보 업데이트
+    public void updateNotice(String title, String content) {
+        this.title = title;
+        this.content = content;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    // 🆕 첨부파일 메타데이터만 업데이트 (size 없이)
+    public void updateAttachment(String filename, String contentType, byte[] fileData) {
+        this.attachmentFilename = filename;
+        this.attachmentContentType = contentType;
+        this.attachmentFile = fileData;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    // ✅ 첨부파일 여부 확인
+    public boolean hasAttachment() {
+        return this.attachmentFilename != null && !this.attachmentFilename.trim().isEmpty();
+    }
+
+    // ✅ 첨부파일 제거
+    public void removeAttachment() {
+        this.attachmentFilename = null;
+        this.attachmentContentType = null;
+        this.attachmentSize = null;
+        this.attachmentFile = null;
+        this.updatedAt = LocalDateTime.now();
     }
 
     // Getter 메서드들
@@ -78,8 +116,20 @@ public class Notice {
         return authorDepartment;
     }
 
-    public Boolean getHasAttachments() {
-        return hasAttachments;
+    public String getAttachmentFilename() {
+        return attachmentFilename;
+    }
+
+    public String getAttachmentContentType() {
+        return attachmentContentType;
+    }
+
+    public Long getAttachmentSize() {
+        return attachmentSize;
+    }
+
+    public byte[] getAttachmentFile() {
+        return attachmentFile;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -115,8 +165,20 @@ public class Notice {
         this.authorDepartment = authorDepartment;
     }
 
-    public void setHasAttachments(Boolean hasAttachments) {
-        this.hasAttachments = hasAttachments;
+    public void setAttachmentFilename(String attachmentFilename) {
+        this.attachmentFilename = attachmentFilename;
+    }
+
+    public void setAttachmentContentType(String attachmentContentType) {
+        this.attachmentContentType = attachmentContentType;
+    }
+
+    public void setAttachmentSize(Long attachmentSize) {
+        this.attachmentSize = attachmentSize;
+    }
+
+    public void setAttachmentFile(byte[] attachmentFile) {
+        this.attachmentFile = attachmentFile;
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {
@@ -127,14 +189,6 @@ public class Notice {
         this.updatedAt = updatedAt;
     }
 
-    // 업데이트 메서드 (비즈니스 로직)
-    public void updateNotice(String title, String content, Boolean hasAttachments) {
-        this.title = title;
-        this.content = content;
-        this.hasAttachments = hasAttachments != null ? hasAttachments : false;
-    }
-
-    // toString 메서드 (디버깅용)
     @Override
     public String toString() {
         return "Notice{" +
@@ -144,23 +198,12 @@ public class Notice {
                 ", authorId=" + authorId +
                 ", authorName='" + authorName + '\'' +
                 ", authorDepartment='" + authorDepartment + '\'' +
-                ", hasAttachments=" + hasAttachments +
+                ", attachmentFilename='" + attachmentFilename + '\'' +
+                ", attachmentContentType='" + attachmentContentType + '\'' +
+                ", attachmentSize=" + attachmentSize +
+                ", hasAttachmentFile=" + (attachmentFile != null) +
                 ", createdAt=" + createdAt +
                 ", updatedAt=" + updatedAt +
                 '}';
-    }
-
-    // equals & hashCode (ID 기준)
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-        Notice notice = (Notice) obj;
-        return id != null && id.equals(notice.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return id != null ? id.hashCode() : 0;
     }
 }

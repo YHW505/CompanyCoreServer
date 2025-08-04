@@ -10,11 +10,13 @@ public class NoticeResponse {
     private Long authorId;
     private String authorName;
     private String authorDepartment;
-    private Boolean hasAttachments;
+    private Boolean hasAttachments; // ✨ 동적으로 계산됨
+    private String attachmentFilename;
+    private String attachmentContentType;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
-    // ✅ 기존 생성자 (Notice 엔티티를 받는)
+    // Entity로부터 생성하는 생성자
     public NoticeResponse(Notice notice) {
         this.id = notice.getId();
         this.title = notice.getTitle();
@@ -22,14 +24,24 @@ public class NoticeResponse {
         this.authorId = notice.getAuthorId();
         this.authorName = notice.getAuthorName();
         this.authorDepartment = notice.getAuthorDepartment();
-        this.hasAttachments = notice.getHasAttachments();
+
+        // ✅ 동적으로 첨부파일 여부 판단
+        this.hasAttachments = notice.hasAttachment();
+
+        // 첨부파일 정보 설정
+        if (notice.hasAttachment()) {
+            this.attachmentFilename = notice.getAttachmentFilename();
+            this.attachmentContentType = notice.getAttachmentContentType();
+        }
+
         this.createdAt = notice.getCreatedAt();
         this.updatedAt = notice.getUpdatedAt();
     }
 
-    // ✅ 새로 추가할 생성자 (모든 필드를 받는)
+    // 모든 필드를 받는 생성자
     public NoticeResponse(Long id, String title, String content, Long authorId,
                           String authorName, String authorDepartment, Boolean hasAttachments,
+                          String attachmentFilename, String attachmentContentType,
                           LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.title = title;
@@ -38,14 +50,15 @@ public class NoticeResponse {
         this.authorName = authorName;
         this.authorDepartment = authorDepartment;
         this.hasAttachments = hasAttachments;
+        this.attachmentFilename = attachmentFilename;
+        this.attachmentContentType = attachmentContentType;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
 
-    // ✅ 기본 생성자
     public NoticeResponse() {}
 
-    // Getter, Setter 메서드들...
+    // 모든 getter/setter들 (변경 없음)
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -66,6 +79,12 @@ public class NoticeResponse {
 
     public Boolean getHasAttachments() { return hasAttachments; }
     public void setHasAttachments(Boolean hasAttachments) { this.hasAttachments = hasAttachments; }
+
+    public String getAttachmentFilename() { return attachmentFilename; }
+    public void setAttachmentFilename(String attachmentFilename) { this.attachmentFilename = attachmentFilename; }
+
+    public String getAttachmentContentType() { return attachmentContentType; }
+    public void setAttachmentContentType(String attachmentContentType) { this.attachmentContentType = attachmentContentType; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

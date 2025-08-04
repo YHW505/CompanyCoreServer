@@ -4,30 +4,43 @@ import com.example.companycoreserver.entity.Notice;
 
 public class NoticeRequest {
 
-
     private String title;
     private String content;
     private Long authorId;
     private String authorName;
     private String authorDepartment;
 
-    private Boolean hasAttachments;
+    // 🆕 첨부파일 메타데이터만 (바이너리 데이터 제외)
+    private String attachmentFilename;
+    private String attachmentContentType;
 
     // 기본 생성자
     public NoticeRequest() {}
 
-    // 모든 필드 생성자
+    // ✅ 기본 생성자 (필수 필드만)
     public NoticeRequest(String title, String content, Long authorId,
-                            String authorName, String authorDepartment, Boolean hasAttachments) {
+                         String authorName, String authorDepartment) {
         this.title = title;
         this.content = content;
         this.authorId = authorId;
         this.authorName = authorName;
         this.authorDepartment = authorDepartment;
-        this.hasAttachments = hasAttachments;
     }
 
-    // Getter 메서드들
+    // 🆕 첨부파일 메타데이터 포함 생성자
+    public NoticeRequest(String title, String content, Long authorId,
+                         String authorName, String authorDepartment,
+                         String attachmentFilename, String attachmentContentType) {
+        this.title = title;
+        this.content = content;
+        this.authorId = authorId;
+        this.authorName = authorName;
+        this.authorDepartment = authorDepartment;
+        this.attachmentFilename = attachmentFilename;
+        this.attachmentContentType = attachmentContentType;
+    }
+
+    // ✅ 기존 Getter 메서드들
     public String getTitle() {
         return title;
     }
@@ -48,11 +61,18 @@ public class NoticeRequest {
         return authorDepartment;
     }
 
-    public Boolean getHasAttachments() {
-        return hasAttachments;
+    // 🆕 첨부파일 메타데이터 Getter (바이너리 제외)
+    public String getAttachmentFilename() {
+        return attachmentFilename;
     }
 
-    // Setter 메서드들
+    public String getAttachmentContentType() {
+        return attachmentContentType;
+    }
+
+
+
+    // ✅ 기존 Setter 메서드들
     public void setTitle(String title) {
         this.title = title;
     }
@@ -73,11 +93,17 @@ public class NoticeRequest {
         this.authorDepartment = authorDepartment;
     }
 
-    public void setHasAttachments(Boolean hasAttachments) {
-        this.hasAttachments = hasAttachments;
+    // 🆕 첨부파일 메타데이터 Setter (바이너리 제외)
+    public void setAttachmentFilename(String attachmentFilename) {
+        this.attachmentFilename = attachmentFilename;
     }
 
-    // Entity 변환 메서드
+    public void setAttachmentContentType(String attachmentContentType) {
+        this.attachmentContentType = attachmentContentType;
+    }
+
+
+    // ✅ Entity 변환 메서드 (바이너리 데이터 없이)
     public Notice toEntity() {
         Notice notice = new Notice();
         notice.setTitle(this.title);
@@ -85,20 +111,27 @@ public class NoticeRequest {
         notice.setAuthorId(this.authorId);
         notice.setAuthorName(this.authorName);
         notice.setAuthorDepartment(this.authorDepartment);
-        notice.setHasAttachments(this.hasAttachments != null ? this.hasAttachments : false);
+
+        // 🆕 첨부파일 메타데이터만 설정 (바이너리는 별도 처리)
+        if (this.attachmentFilename != null && !this.attachmentFilename.trim().isEmpty()) {
+            notice.setAttachmentFilename(this.attachmentFilename);
+            notice.setAttachmentContentType(this.attachmentContentType);
+        }
+
         return notice;
     }
 
-    // toString 메서드 (디버깅용)
+    // ✅ toString 메서드
     @Override
     public String toString() {
-        return "NoticeRequestDto{" +
+        return "NoticeRequest{" +
                 "title='" + title + '\'' +
                 ", content='" + content + '\'' +
                 ", authorId=" + authorId +
                 ", authorName='" + authorName + '\'' +
                 ", authorDepartment='" + authorDepartment + '\'' +
-                ", hasAttachments=" + hasAttachments +
+                ", attachmentFilename='" + attachmentFilename + '\'' +
+                ", attachmentContentType='" + attachmentContentType + '\'' +
                 '}';
     }
 }
