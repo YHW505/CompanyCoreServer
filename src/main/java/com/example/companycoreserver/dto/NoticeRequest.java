@@ -13,6 +13,9 @@ public class NoticeRequest {
     // 🆕 첨부파일 메타데이터만 (바이너리 데이터 제외)
     private String attachmentFilename;
     private String attachmentContentType;
+    
+    // 🆕 첨부파일 내용 (Base64 인코딩된 문자열)
+    private String attachmentContent;
 
     // 기본 생성자
     public NoticeRequest() {}
@@ -69,8 +72,11 @@ public class NoticeRequest {
     public String getAttachmentContentType() {
         return attachmentContentType;
     }
-
-
+    
+    // 🆕 첨부파일 내용 Getter
+    public String getAttachmentContent() {
+        return attachmentContent;
+    }
 
     // ✅ 기존 Setter 메서드들
     public void setTitle(String title) {
@@ -101,7 +107,11 @@ public class NoticeRequest {
     public void setAttachmentContentType(String attachmentContentType) {
         this.attachmentContentType = attachmentContentType;
     }
-
+    
+    // 🆕 첨부파일 내용 Setter
+    public void setAttachmentContent(String attachmentContent) {
+        this.attachmentContent = attachmentContent;
+    }
 
     // ✅ Entity 변환 메서드 (바이너리 데이터 없이)
     public Notice toEntity() {
@@ -132,6 +142,7 @@ public class NoticeRequest {
                 ", authorDepartment='" + authorDepartment + '\'' +
                 ", attachmentFilename='" + attachmentFilename + '\'' +
                 ", attachmentContentType='" + attachmentContentType + '\'' +
+                ", attachmentContent='" + (attachmentContent != null ? attachmentContent.substring(0, Math.min(50, attachmentContent.length())) + "..." : "null") + '\'' +
                 '}';
     }
 }
