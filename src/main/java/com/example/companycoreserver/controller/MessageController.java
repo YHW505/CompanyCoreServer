@@ -26,6 +26,7 @@ public class MessageController {
     public ResponseEntity<?> sendMessage(@RequestBody MessageRequest request,
                                          @RequestHeader("User-Id") Long senderId) {
         try {
+            // 🔥 이 부분이 핵심 변경사항
             MessageResponse response = messageService.sendMessage(request, senderId);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
