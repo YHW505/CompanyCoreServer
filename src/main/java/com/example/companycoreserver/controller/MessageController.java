@@ -82,6 +82,26 @@ public class MessageController {
         }
     }
 
+    // 메시지/email 삭제
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteMessage(@PathVariable Long id,
+                                           @RequestHeader("User-Id") Long userId) {
+        try {
+            messageService.deleteMessage(id, userId);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "메시지가 삭제되었습니다.",
+                    "deletedId", id
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "error", "서버 오류가 발생했습니다."
+            ));
+        }
+    }
+
     // ✅ 5. 메시지 일괄 처리
     @PutMapping("/bulk")
     public ResponseEntity<?> bulkUpdateMessages(@RequestBody Map<String, Object> request,

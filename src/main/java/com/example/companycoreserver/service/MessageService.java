@@ -141,13 +141,16 @@ public class MessageService {
 
     // ✅ 5. 메시지 삭제
     public void deleteMessage(Long messageId, Long userId) {
+        // 1. 메시지 존재 여부 확인
         Message message = messageRepository.findById(messageId)
                 .orElseThrow(() -> new RuntimeException("메시지를 찾을 수 없습니다"));
 
+        // 2. 삭제 권한 확인 (발신자 또는 수신자만 삭제 가능)
         if (!message.getSenderId().equals(userId) && !message.getReceiverId().equals(userId)) {
             throw new RuntimeException("메시지 삭제 권한이 없습니다.");
         }
 
+        // 3. 메시지 삭제
         messageRepository.delete(message);
     }
 

@@ -193,6 +193,48 @@ public class ApprovalController {
         }
     }
 
+    // ✅ 내가 요청한 결재 삭제 (요청자만 가능)
+    @DeleteMapping("/my-request/{approvalId}")
+    public ResponseEntity<?> deleteMyRequest(@PathVariable Long approvalId, @RequestBody Map<String, Object> request) {
+        try {
+            Object requesterIdObj = request.get("requesterId");
+            if (requesterIdObj == null) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "요청자 ID는 필수입니다.",
+                        "approvalId", approvalId
+                ));
+            }
+
+            Long requesterId = Long.valueOf(requesterIdObj.toString());
+
+            approvalService.deleteMyRequest(approvalId, requesterId);
+
+            return ResponseEntity.ok()
+                    .body(Map.of(
+                            "success", true,
+                            "message", "결재 요청이 성공적으로 삭제되었습니다.",
+                            "deletedApprovalId", approvalId
+                    ));
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of(
+                            "success", false,
+                            "message", e.getMessage(),
+                            "approvalId", approvalId
+                    ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "success", false,
+                            "message", "결재 삭제 중 오류가 발생했습니다.",
+                            "error", e.getMessage()
+                    ));
+        }
+    }
+
+
     // ✅ 결재 상세 조회 - DTO 변환
     @GetMapping("/{approvalId}")
     public ResponseEntity<ApprovalResponse> getApprovalDetail(@PathVariable Long approvalId) {

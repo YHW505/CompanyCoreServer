@@ -98,12 +98,12 @@ public class UserController {
     // 🔍 이메일로 사용자 조회
     @GetMapping("/email/{email}")
     public ResponseEntity<User> getUserByEmail(
-            @RequestHeader("Authorization") String token,
+//            @RequestHeader("Authorization") String token,
             @PathVariable String email) {
         try {
-            if (!isValidToken(token)) {
-                return ResponseEntity.status(401).build();
-            }
+//            if (!isValidToken(token)) {
+//                return ResponseEntity.status(401).build();
+//            }
 
             Optional<User> user = userService.getUserByEmail(email);
             if (user.isPresent()) {
