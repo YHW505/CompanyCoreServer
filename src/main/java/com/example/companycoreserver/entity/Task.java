@@ -34,9 +34,19 @@ public class Task {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "attachment", length = 255)
-    private String attachment;
+    // 첨부파일 관련 필드들
+    @Column(length = 255)
+    private String attachmentFilename;
 
+    @Column(length = 100)
+    private String attachmentContentType;
+
+    @Column
+    private Long attachmentSize;
+
+    @Lob
+    @Column(columnDefinition = "LONGBLOB")
+    private byte[] attachmentFile;
     // ✅ TaskStatus enum 사용 (진행중, 완료, 보류, 결재종료, 반려)
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
@@ -76,6 +86,23 @@ public class Task {
         this.status = status;
     }
 
+    // 🆕 첨부파일 메타데이터만 업데이트 (size 없이)
+    public void updateAttachment(String filename, String contentType, byte[] fileData) {
+        this.attachmentFilename = filename;
+        this.attachmentContentType = contentType;
+        this.attachmentFile = fileData;
+//        this.updatedAt = LocalDateTime.now();
+    }
+
+    // ✅ 첨부파일 제거
+    public void removeAttachment() {
+        this.attachmentFilename = null;
+        this.attachmentContentType = null;
+        this.attachmentSize = null;
+        this.attachmentFile = null;
+//        this.updatedAt = LocalDateTime.now();
+    }
+
     // Getter/Setter
     public Integer getTaskId() { return taskId; }
     public void setTaskId(Integer taskId) { this.taskId = taskId; }
@@ -95,8 +122,35 @@ public class Task {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public String getAttachment() { return attachment; }
-    public void setAttachment(String attachment) { this.attachment = attachment; }
+    public String getAttachmentFilename() {
+        return attachmentFilename;
+    }
+    public void setAttachmentFilename(String attachmentFilename) {
+        this.attachmentFilename = attachmentFilename;
+    }
+
+    public String getAttachmentContentType() {
+        return attachmentContentType;
+    }
+    public void setAttachmentContentType(String attachmentContentType) {
+        this.attachmentContentType = attachmentContentType;
+    }
+
+    public Long getAttachmentSize() {
+        return attachmentSize;
+    }
+    public void setAttachmentSize(Long attachmentSize) {
+        this.attachmentSize = attachmentSize;
+    }
+
+
+    public byte[] getAttachmentFile() {
+        return attachmentFile;
+    }
+    public void setAttachmentFile(byte[] attachmentFile) {
+        this.attachmentFile = attachmentFile;
+    }
+
 
     public TaskStatus getStatus() { return status; }
     public void setStatus(TaskStatus status) { this.status = status; }
