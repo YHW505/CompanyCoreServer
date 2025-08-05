@@ -83,6 +83,7 @@ public class ApprovalController {
             // 🔄 첨부파일 메타데이터 추출
             String attachmentFilename = (String) request.get("attachmentFilename");
             String attachmentContentType = (String) request.get("attachmentContentType");
+            String attachmentContent = (String) request.get("attachmentContent"); // Base64 인코딩된 첨부파일 내용
             Long attachmentSize = null;
 
             // attachmentSize 안전한 변환
@@ -119,7 +120,7 @@ public class ApprovalController {
             if (attachmentFilename != null && !attachmentFilename.trim().isEmpty()) {
                 // 첨부파일 있는 경우
                 approval = approvalService.createApproval(title, content, requesterId, approverId,
-                        attachmentFilename, attachmentContentType, attachmentSize);
+                        attachmentFilename, attachmentContentType, attachmentSize, attachmentContent);
             } else {
                 // 첨부파일 없는 경우
                 approval = approvalService.createApproval(title, content, requesterId, approverId);

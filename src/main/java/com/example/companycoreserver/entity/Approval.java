@@ -53,6 +53,10 @@ public class Approval {
     private Long attachmentSize;
 
     @Lob
+    @Column(columnDefinition = "LONGTEXT")
+    private String attachmentContent; // Base64 인코딩된 첨부파일 내용
+
+    @Lob
     @Column(columnDefinition = "LONGBLOB")
     private byte[] attachmentFile;
 
@@ -211,6 +215,14 @@ public class Approval {
 
     public void setAttachmentSize(Long attachmentSize) {
         this.attachmentSize = attachmentSize;
+    }
+
+    public String getAttachmentContent() {
+        return attachmentContent;
+    }
+
+    public void setAttachmentContent(String attachmentContent) {
+        this.attachmentContent = attachmentContent;
     }
 
     public byte[] getAttachmentFile() {

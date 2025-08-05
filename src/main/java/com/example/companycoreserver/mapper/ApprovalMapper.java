@@ -20,10 +20,15 @@ public class ApprovalMapper {
         response.setRejectionReason(approval.getRejectionReason());
         response.setProcessedDate(approval.getProcessedDate());
 
-        // 🔄 첨부파일 관련 필드 수정 (attachmentPath → 메타데이터 필드들)
+        // 첨부파일 메타데이터 설정
         response.setAttachmentFilename(approval.getAttachmentFilename());
         response.setAttachmentContentType(approval.getAttachmentContentType());
         response.setAttachmentSize(approval.getAttachmentSize());
+
+        // 첨부파일 내용 설정 (Base64 인코딩된 문자열)
+        if (approval.getAttachmentContent() != null && !approval.getAttachmentContent().trim().isEmpty()) {
+            response.setAttachmentContent(approval.getAttachmentContent());
+        }
 
         // 🆕 생성/수정 시간 추가
         response.setCreatedAt(approval.getCreatedAt());

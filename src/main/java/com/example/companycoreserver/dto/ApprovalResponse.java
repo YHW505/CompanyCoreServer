@@ -17,6 +17,7 @@ public class ApprovalResponse {
     private String attachmentFilename;
     private String attachmentContentType;
     private Long attachmentSize;
+    private String attachmentContent; // Base64 인코딩된 첨부파일 내용
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -28,7 +29,7 @@ public class ApprovalResponse {
                             ApproverInfo approver, LocalDateTime requestDate, ApprovalStatus status,
                             String rejectionReason, LocalDateTime processedDate,
                             String attachmentFilename, String attachmentContentType, Long attachmentSize,
-                            LocalDateTime createdAt, LocalDateTime updatedAt) {
+                            String attachmentContent, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.title = title;
         this.content = content;
@@ -41,6 +42,7 @@ public class ApprovalResponse {
         this.attachmentFilename = attachmentFilename;
         this.attachmentContentType = attachmentContentType;
         this.attachmentSize = attachmentSize;
+        this.attachmentContent = attachmentContent;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -146,6 +148,14 @@ public class ApprovalResponse {
 
     public void setAttachmentSize(Long attachmentSize) {
         this.attachmentSize = attachmentSize;
+    }
+
+    public String getAttachmentContent() {
+        return attachmentContent;
+    }
+
+    public void setAttachmentContent(String attachmentContent) {
+        this.attachmentContent = attachmentContent;
     }
 
     // 🆕 생성/수정 시간 getter/setter 추가
