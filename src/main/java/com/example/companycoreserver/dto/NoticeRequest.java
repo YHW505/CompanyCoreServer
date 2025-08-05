@@ -13,6 +13,7 @@ public class NoticeRequest {
     // 🆕 첨부파일 메타데이터만 (바이너리 데이터 제외)
     private String attachmentFilename;
     private String attachmentContentType;
+    private Long attachmentSize;  // 🆕 파일 크기 (바이트)
     
     // 🆕 첨부파일 내용 (Base64 인코딩된 문자열)
     private String attachmentContent;
@@ -33,7 +34,7 @@ public class NoticeRequest {
     // 🆕 첨부파일 메타데이터 포함 생성자
     public NoticeRequest(String title, String content, Long authorId,
                          String authorName, String authorDepartment,
-                         String attachmentFilename, String attachmentContentType) {
+                         String attachmentFilename, String attachmentContentType, Long attachmentSize) {
         this.title = title;
         this.content = content;
         this.authorId = authorId;
@@ -41,6 +42,7 @@ public class NoticeRequest {
         this.authorDepartment = authorDepartment;
         this.attachmentFilename = attachmentFilename;
         this.attachmentContentType = attachmentContentType;
+        this.attachmentSize = attachmentSize;
     }
 
     // ✅ 기존 Getter 메서드들
@@ -71,6 +73,11 @@ public class NoticeRequest {
 
     public String getAttachmentContentType() {
         return attachmentContentType;
+    }
+    
+    // 🆕 파일 크기 Getter
+    public Long getAttachmentSize() {
+        return attachmentSize;
     }
     
     // 🆕 첨부파일 내용 Getter
@@ -108,6 +115,11 @@ public class NoticeRequest {
         this.attachmentContentType = attachmentContentType;
     }
     
+    // 🆕 파일 크기 Setter
+    public void setAttachmentSize(Long attachmentSize) {
+        this.attachmentSize = attachmentSize;
+    }
+    
     // 🆕 첨부파일 내용 Setter
     public void setAttachmentContent(String attachmentContent) {
         this.attachmentContent = attachmentContent;
@@ -126,6 +138,7 @@ public class NoticeRequest {
         if (this.attachmentFilename != null && !this.attachmentFilename.trim().isEmpty()) {
             notice.setAttachmentFilename(this.attachmentFilename);
             notice.setAttachmentContentType(this.attachmentContentType);
+            notice.setAttachmentSize(this.attachmentSize);
         }
 
         return notice;

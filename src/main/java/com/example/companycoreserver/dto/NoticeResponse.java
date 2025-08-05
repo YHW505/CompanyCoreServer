@@ -14,6 +14,7 @@ public class NoticeResponse {
     private Boolean hasAttachments; // ✨ 동적으로 계산됨
     private String attachmentFilename;
     private String attachmentContentType;
+    private Long attachmentSize; // 🆕 파일 크기 (바이트)
     private String attachmentContent; // 🆕 첨부파일 내용 (Base64 인코딩)
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -34,6 +35,7 @@ public class NoticeResponse {
         if (notice.hasAttachment()) {
             this.attachmentFilename = notice.getAttachmentFilename();
             this.attachmentContentType = notice.getAttachmentContentType();
+            this.attachmentSize = notice.getAttachmentSize();
             
             // 🆕 첨부파일 내용을 Base64로 인코딩하여 설정
             if (notice.getAttachmentFile() != null && notice.getAttachmentFile().length > 0) {
@@ -48,7 +50,7 @@ public class NoticeResponse {
     // 모든 필드를 받는 생성자
     public NoticeResponse(Long id, String title, String content, Long authorId,
                           String authorName, String authorDepartment, Boolean hasAttachments,
-                          String attachmentFilename, String attachmentContentType,
+                          String attachmentFilename, String attachmentContentType, Long attachmentSize,
                           String attachmentContent, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.title = title;
@@ -59,6 +61,7 @@ public class NoticeResponse {
         this.hasAttachments = hasAttachments;
         this.attachmentFilename = attachmentFilename;
         this.attachmentContentType = attachmentContentType;
+        this.attachmentSize = attachmentSize;
         this.attachmentContent = attachmentContent;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
@@ -93,6 +96,9 @@ public class NoticeResponse {
 
     public String getAttachmentContentType() { return attachmentContentType; }
     public void setAttachmentContentType(String attachmentContentType) { this.attachmentContentType = attachmentContentType; }
+    
+    public Long getAttachmentSize() { return attachmentSize; }
+    public void setAttachmentSize(Long attachmentSize) { this.attachmentSize = attachmentSize; }
     
     public String getAttachmentContent() { return attachmentContent; }
     public void setAttachmentContent(String attachmentContent) { this.attachmentContent = attachmentContent; }
