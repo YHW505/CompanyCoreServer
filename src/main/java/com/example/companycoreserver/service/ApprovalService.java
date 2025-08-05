@@ -97,6 +97,25 @@ public class ApprovalService {
         return approvalRepository.save(approval);
     }
 
+
+    // ✅ 내가 요청한 결재 삭제 (요청자만 가능)
+    public void deleteMyRequest(Long approvalId, Long requesterId) {
+        Approval approval = approvalRepository.findById(approvalId)
+                .orElseThrow(() -> new RuntimeException("결재 요청을 찾을 수 없습니다."));
+
+        // 요청자만 삭제 가능
+        if (!approval.getRequester().getUserId().equals(requesterId)) {
+            throw new RuntimeException("본인이 요청한 결재만 삭제할 수 있습니다.");
+        }
+
+        // 대기중인 결재만 삭제 가능
+        if (!approval.isPending()) {
+            throw new RuntimeException("처리된 결재는 삭제할 수 없습니다.");
+        }
+
+        approvalRepository.delete(approval);
+    }
+
     // ✅ 결재 상세 조회 (Optional 버전)
     public Optional<Approval> getApprovalDetail(Long approvalId) {
         return approvalRepository.findById(approvalId);
