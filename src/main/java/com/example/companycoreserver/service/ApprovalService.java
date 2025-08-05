@@ -38,16 +38,24 @@ public class ApprovalService {
         return approvalRepository.findPendingApprovalsByApproverId(userId);
     }
 
-    // ✅ 결재 요청 생성
-    public Approval createApproval(String title, String content, Long requesterId, Long approverId, String attachmentPath) {
+    // 🔄 결재 요청 생성 - 첨부파일 파라미터 수정
+    public Approval createApproval(String title, String content, Long requesterId, Long approverId,
+                                   String attachmentFilename, String attachmentContentType, Long attachmentSize) {
         User requester = userRepository.findById(requesterId)
                 .orElseThrow(() -> new RuntimeException("요청자를 찾을 수 없습니다."));
 
         User approver = userRepository.findById(approverId)
                 .orElseThrow(() -> new RuntimeException("결재자를 찾을 수 없습니다."));
 
-        Approval approval = new Approval(title, content, requester, approver, attachmentPath);
+        // 🔄 새로운 생성자 사용 (첨부파일 메타데이터 포함)
+        Approval approval = new Approval(title, content, requester, approver,
+                attachmentFilename, attachmentContentType, attachmentSize);
         return approvalRepository.save(approval);
+    }
+
+    // 🆕 첨부파일 없는 결재 요청 생성 (오버로드)
+    public Approval createApproval(String title, String content, Long requesterId, Long approverId) {
+        return createApproval(title, content, requesterId, approverId, null, null, null);
     }
 
     // ✅ 결재 승인
@@ -94,7 +102,7 @@ public class ApprovalService {
         return approvalRepository.findById(approvalId);
     }
 
-    // ✅ 결재 상세 조회 (Entity 직접 반환 - 새로 추가)
+    // ✅ 결재 상세 조회 (Entity 직접 반환)
     public Approval getApprovalById(Long approvalId) {
         return approvalRepository.findById(approvalId)
                 .orElseThrow(() -> new RuntimeException("결재 요청을 찾을 수 없습니다."));

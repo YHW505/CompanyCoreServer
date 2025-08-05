@@ -14,15 +14,21 @@ public class ApprovalResponse {
     private ApprovalStatus status;
     private String rejectionReason;
     private LocalDateTime processedDate;
-    private String attachmentPath;
+    private String attachmentFilename;
+    private String attachmentContentType;
+    private Long attachmentSize;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     // 기본 생성자
     public ApprovalResponse() {}
 
-    // 모든 필드 생성자
+    // 🔄 모든 필드 생성자 수정
     public ApprovalResponse(Long id, String title, String content, RequesterInfo requester,
                             ApproverInfo approver, LocalDateTime requestDate, ApprovalStatus status,
-                            String rejectionReason, LocalDateTime processedDate, String attachmentPath) {
+                            String rejectionReason, LocalDateTime processedDate,
+                            String attachmentFilename, String attachmentContentType, Long attachmentSize,
+                            LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.title = title;
         this.content = content;
@@ -32,7 +38,16 @@ public class ApprovalResponse {
         this.status = status;
         this.rejectionReason = rejectionReason;
         this.processedDate = processedDate;
-        this.attachmentPath = attachmentPath;
+        this.attachmentFilename = attachmentFilename;
+        this.attachmentContentType = attachmentContentType;
+        this.attachmentSize = attachmentSize;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    // 🆕 첨부파일 유무 확인 편의 메서드
+    public boolean hasAttachment() {
+        return attachmentFilename != null && !attachmentFilename.trim().isEmpty();
     }
 
     // Getter & Setter
@@ -108,15 +123,49 @@ public class ApprovalResponse {
         this.processedDate = processedDate;
     }
 
-    public String getAttachmentPath() {
-        return attachmentPath;
+    // 🔄 첨부파일 관련 getter/setter 수정
+    public String getAttachmentFilename() {
+        return attachmentFilename;
     }
 
-    public void setAttachmentPath(String attachmentPath) {
-        this.attachmentPath = attachmentPath;
+    public void setAttachmentFilename(String attachmentFilename) {
+        this.attachmentFilename = attachmentFilename;
     }
 
-    // 내부 클래스 - RequesterInfo
+    public String getAttachmentContentType() {
+        return attachmentContentType;
+    }
+
+    public void setAttachmentContentType(String attachmentContentType) {
+        this.attachmentContentType = attachmentContentType;
+    }
+
+    public Long getAttachmentSize() {
+        return attachmentSize;
+    }
+
+    public void setAttachmentSize(Long attachmentSize) {
+        this.attachmentSize = attachmentSize;
+    }
+
+    // 🆕 생성/수정 시간 getter/setter 추가
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    // 내부 클래스들은 기존과 동일
     public static class RequesterInfo {
         private Long userId;
         private String employeeCode;
@@ -124,10 +173,8 @@ public class ApprovalResponse {
         private String position;
         private String department;
 
-        // 기본 생성자
         public RequesterInfo() {}
 
-        // 모든 필드 생성자
         public RequesterInfo(Long userId, String employeeCode, String username,
                              String position, String department) {
             this.userId = userId;
@@ -137,49 +184,19 @@ public class ApprovalResponse {
             this.department = department;
         }
 
-        // Getter & Setter
-        public Long getUserId() {
-            return userId;
-        }
-
-        public void setUserId(Long userId) {
-            this.userId = userId;
-        }
-
-        public String getEmployeeCode() {
-            return employeeCode;
-        }
-
-        public void setEmployeeCode(String employeeCode) {
-            this.employeeCode = employeeCode;
-        }
-
-        public String getUsername() {
-            return username;
-        }
-
-        public void setUsername(String username) {
-            this.username = username;
-        }
-
-        public String getPosition() {
-            return position;
-        }
-
-        public void setPosition(String position) {
-            this.position = position;
-        }
-
-        public String getDepartment() {
-            return department;
-        }
-
-        public void setDepartment(String department) {
-            this.department = department;
-        }
+        // Getter & Setter (기존과 동일)
+        public Long getUserId() { return userId; }
+        public void setUserId(Long userId) { this.userId = userId; }
+        public String getEmployeeCode() { return employeeCode; }
+        public void setEmployeeCode(String employeeCode) { this.employeeCode = employeeCode; }
+        public String getUsername() { return username; }
+        public void setUsername(String username) { this.username = username; }
+        public String getPosition() { return position; }
+        public void setPosition(String position) { this.position = position; }
+        public String getDepartment() { return department; }
+        public void setDepartment(String department) { this.department = department; }
     }
 
-    // 내부 클래스 - ApproverInfo
     public static class ApproverInfo {
         private Long userId;
         private String employeeCode;
@@ -187,10 +204,8 @@ public class ApprovalResponse {
         private String position;
         private String department;
 
-        // 기본 생성자
         public ApproverInfo() {}
 
-        // 모든 필드 생성자
         public ApproverInfo(Long userId, String employeeCode, String username,
                             String position, String department) {
             this.userId = userId;
@@ -200,45 +215,16 @@ public class ApprovalResponse {
             this.department = department;
         }
 
-        // Getter & Setter
-        public Long getUserId() {
-            return userId;
-        }
-
-        public void setUserId(Long userId) {
-            this.userId = userId;
-        }
-
-        public String getEmployeeCode() {
-            return employeeCode;
-        }
-
-        public void setEmployeeCode(String employeeCode) {
-            this.employeeCode = employeeCode;
-        }
-
-        public String getUsername() {
-            return username;
-        }
-
-        public void setUsername(String username) {
-            this.username = username;
-        }
-
-        public String getPosition() {
-            return position;
-        }
-
-        public void setPosition(String position) {
-            this.position = position;
-        }
-
-        public String getDepartment() {
-            return department;
-        }
-
-        public void setDepartment(String department) {
-            this.department = department;
-        }
+        // Getter & Setter (기존과 동일)
+        public Long getUserId() { return userId; }
+        public void setUserId(Long userId) { this.userId = userId; }
+        public String getEmployeeCode() { return employeeCode; }
+        public void setEmployeeCode(String employeeCode) { this.employeeCode = employeeCode; }
+        public String getUsername() { return username; }
+        public void setUsername(String username) { this.username = username; }
+        public String getPosition() { return position; }
+        public void setPosition(String position) { this.position = position; }
+        public String getDepartment() { return department; }
+        public void setDepartment(String department) { this.department = department; }
     }
 }

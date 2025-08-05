@@ -65,7 +65,7 @@ public class ApprovalController {
         return ResponseEntity.ok(responses);
     }
 
-    // ✅ 결재 요청 생성 - DTO 변환
+    // 🔄 결재 요청 생성 - 첨부파일 메타데이터 처리
     @PostMapping("/create")
     public ResponseEntity<?> createApproval(@RequestBody Map<String, Object> request) {
         try {
@@ -79,7 +79,21 @@ public class ApprovalController {
             }
 
             String content = (String) request.get("content");
-            String attachmentPath = (String) request.get("attachmentPath");
+
+            // 🔄 첨부파일 메타데이터 추출
+            String attachmentFilename = (String) request.get("attachmentFilename");
+            String attachmentContentType = (String) request.get("attachmentContentType");
+            Long attachmentSize = null;
+
+            // attachmentSize 안전한 변환
+            Object attachmentSizeObj = request.get("attachmentSize");
+            if (attachmentSizeObj != null) {
+                try {
+                    attachmentSize = Long.valueOf(attachmentSizeObj.toString());
+                } catch (NumberFormatException e) {
+                    return ResponseEntity.badRequest().body("첨부파일 크기는 숫자여야 합니다.");
+                }
+            }
 
             // requesterId null 체크
             Object requesterIdObj = request.get("requesterId");
@@ -97,9 +111,19 @@ public class ApprovalController {
             Long requesterId = Long.valueOf(requesterIdObj.toString());
             Long approverId = Long.valueOf(approverIdObj.toString());
 
-            System.out.println("파라미터 파싱 완료 - title: " + title + ", requesterId: " + requesterId + ", approverId: " + approverId);
+            System.out.println("파라미터 파싱 완료 - title: " + title + ", requesterId: " + requesterId +
+                    ", approverId: " + approverId + ", attachmentFilename: " + attachmentFilename);
 
-            Approval approval = approvalService.createApproval(title, content, requesterId, approverId, attachmentPath);
+            // 🔄 새로운 Service 메서드 호출
+            Approval approval;
+            if (attachmentFilename != null && !attachmentFilename.trim().isEmpty()) {
+                // 첨부파일 있는 경우
+                approval = approvalService.createApproval(title, content, requesterId, approverId,
+                        attachmentFilename, attachmentContentType, attachmentSize);
+            } else {
+                // 첨부파일 없는 경우
+                approval = approvalService.createApproval(title, content, requesterId, approverId);
+            }
 
             // Entity → DTO 변환
             ApprovalResponse response = approvalMapper.toResponse(approval);
@@ -179,5 +203,31 @@ public class ApprovalController {
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    // 🆕 제목으로 검색 - DTO 변환
+    @GetMapping("/search")
+    public ResponseEntity<List<ApprovalResponse>> searchByTitle(@RequestParam String title) {
+        List<Approval> approvals = approvalService.searchByTitle(title);
+
+        List<ApprovalResponse> responses = new ArrayList<>();
+        for (Approval approval : approvals) {
+            responses.add(approvalMapper.toResponse(approval));
+        }
+
+        return ResponseEntity.ok(responses);
+    }
+
+    // 🆕 최근 7일간의 결재 목록 - DTO 변환
+    @GetMapping("/recent")
+    public ResponseEntity<List<ApprovalResponse>> getRecentApprovals() {
+        List<Approval> approvals = approvalService.getRecentApprovals();
+
+        List<ApprovalResponse> responses = new ArrayList<>();
+        for (Approval approval : approvals) {
+            responses.add(approvalMapper.toResponse(approval));
+        }
+
+        return ResponseEntity.ok(responses);
     }
 }

@@ -42,8 +42,19 @@ public class Approval {
 
     private LocalDateTime processedDate; // 처리일 (승인/거부 날짜)
 
-    @Column(length = 500)
-    private String attachmentPath; // 첨부파일 경로
+    // 첨부파일 관련 필드들
+    @Column(length = 255)
+    private String attachmentFilename;
+
+    @Column(length = 100)
+    private String attachmentContentType;
+
+    @Column
+    private Long attachmentSize;
+
+    @Lob
+    @Column(columnDefinition = "LONGBLOB")
+    private byte[] attachmentFile;
 
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -52,7 +63,8 @@ public class Approval {
     private LocalDateTime updatedAt;
 
     // 생성자
-    public Approval() {}
+    public Approval() {
+    }
 
     public Approval(String title, String content, User requester, User approver) {
         this.title = title;
@@ -70,45 +82,160 @@ public class Approval {
         this.approver = approver;
         this.requestDate = LocalDateTime.now();
         this.status = ApprovalStatus.PENDING;
-        this.attachmentPath = attachmentPath;
+//        this.attachmentPath = attachmentPath;
+    }
+
+    // 첨부파일 메타데이터를 포함한 생성자 추가
+    public Approval(String title, String content, User requester, User approver,
+                    String attachmentFilename, String attachmentContentType, Long attachmentSize) {
+        this.title = title;
+        this.content = content;
+        this.requester = requester;
+        this.approver = approver;
+        this.attachmentFilename = attachmentFilename;
+        this.attachmentContentType = attachmentContentType;
+        this.attachmentSize = attachmentSize;
+        this.status = ApprovalStatus.PENDING;
+        this.requestDate = LocalDateTime.now();
+    }
+
+    // 🆕 첨부파일 메타데이터만 업데이트 (size 없이)
+    public void updateAttachment(String filename, String contentType, byte[] fileData) {
+        this.attachmentFilename = filename;
+        this.attachmentContentType = contentType;
+        this.attachmentFile = fileData;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    // ✅ 첨부파일 제거
+    public void removeAttachment() {
+        this.attachmentFilename = null;
+        this.attachmentContentType = null;
+        this.attachmentSize = null;
+        this.attachmentFile = null;
+        this.updatedAt = LocalDateTime.now();
     }
 
     // Getter, Setter
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
+    public String getTitle() {
+        return title;
+    }
 
-    public User getRequester() { return requester; }
-    public void setRequester(User requester) { this.requester = requester; }
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-    public User getApprover() { return approver; }
-    public void setApprover(User approver) { this.approver = approver; }
+    public String getContent() {
+        return content;
+    }
 
-    public LocalDateTime getRequestDate() { return requestDate; }
-    public void setRequestDate(LocalDateTime requestDate) { this.requestDate = requestDate; }
+    public void setContent(String content) {
+        this.content = content;
+    }
 
-    public ApprovalStatus getStatus() { return status; }
-    public void setStatus(ApprovalStatus status) { this.status = status; }
+    public User getRequester() {
+        return requester;
+    }
 
-    public String getRejectionReason() { return rejectionReason; }
-    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
+    public void setRequester(User requester) {
+        this.requester = requester;
+    }
 
-    public LocalDateTime getProcessedDate() { return processedDate; }
-    public void setProcessedDate(LocalDateTime processedDate) { this.processedDate = processedDate; }
+    public User getApprover() {
+        return approver;
+    }
 
-    public String getAttachmentPath() { return attachmentPath; }
-    public void setAttachmentPath(String attachmentPath) { this.attachmentPath = attachmentPath; }
+    public void setApprover(User approver) {
+        this.approver = approver;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getRequestDate() {
+        return requestDate;
+    }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public void setRequestDate(LocalDateTime requestDate) {
+        this.requestDate = requestDate;
+    }
+
+    public ApprovalStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ApprovalStatus status) {
+        this.status = status;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
+    }
+
+    public LocalDateTime getProcessedDate() {
+        return processedDate;
+    }
+
+    public void setProcessedDate(LocalDateTime processedDate) {
+        this.processedDate = processedDate;
+    }
+
+    public String getAttachmentFilename() {
+        return attachmentFilename;
+    }
+
+    public void setAttachmentFilename(String attachmentFilename) {
+        this.attachmentFilename = attachmentFilename;
+    }
+
+    public String getAttachmentContentType() {
+        return attachmentContentType;
+    }
+
+    public void setAttachmentContentType(String attachmentContentType) {
+        this.attachmentContentType = attachmentContentType;
+    }
+
+    public Long getAttachmentSize() {
+        return attachmentSize;
+    }
+
+    public void setAttachmentSize(Long attachmentSize) {
+        this.attachmentSize = attachmentSize;
+    }
+
+    public byte[] getAttachmentFile() {
+        return attachmentFile;
+    }
+
+    public void setAttachmentFile(byte[] attachmentFile) {
+        this.attachmentFile = attachmentFile;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 
     // 편의 메서드
     public boolean isPending() {
@@ -123,7 +250,4 @@ public class Approval {
         return this.status == ApprovalStatus.REJECTED;
     }
 
-    public boolean hasAttachment() {
-        return this.attachmentPath != null && !this.attachmentPath.trim().isEmpty();
-    }
 }

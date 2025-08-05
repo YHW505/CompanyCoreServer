@@ -19,27 +19,56 @@ public class ApprovalMapper {
         response.setStatus(approval.getStatus());
         response.setRejectionReason(approval.getRejectionReason());
         response.setProcessedDate(approval.getProcessedDate());
-        response.setAttachmentPath(approval.getAttachmentPath());
+
+        // 🔄 첨부파일 관련 필드 수정 (attachmentPath → 메타데이터 필드들)
+        response.setAttachmentFilename(approval.getAttachmentFilename());
+        response.setAttachmentContentType(approval.getAttachmentContentType());
+        response.setAttachmentSize(approval.getAttachmentSize());
+
+        // 🆕 생성/수정 시간 추가
+        response.setCreatedAt(approval.getCreatedAt());
+        response.setUpdatedAt(approval.getUpdatedAt());
+
         return response;
     }
 
     private ApprovalResponse.RequesterInfo toRequesterInfo(User user) {
+        // 🛡️ null 체크 추가 (안전성 향상)
+        if (user == null) {
+            return null;
+        }
+
         ApprovalResponse.RequesterInfo requesterInfo = new ApprovalResponse.RequesterInfo();
         requesterInfo.setUserId(user.getUserId());
         requesterInfo.setEmployeeCode(user.getEmployeeCode());
         requesterInfo.setUsername(user.getUsername());
-        requesterInfo.setPosition(user.getPosition().getPositionName());
-        requesterInfo.setDepartment(user.getDepartment().getDepartmentName());
+
+        // 🛡️ Position과 Department null 체크 (Lazy Loading 고려)
+        requesterInfo.setPosition(user.getPosition() != null ?
+                user.getPosition().getPositionName() : null);
+        requesterInfo.setDepartment(user.getDepartment() != null ?
+                user.getDepartment().getDepartmentName() : null);
+
         return requesterInfo;
     }
 
     private ApprovalResponse.ApproverInfo toApproverInfo(User user) {
+        // 🛡️ null 체크 추가 (안전성 향상)
+        if (user == null) {
+            return null;
+        }
+
         ApprovalResponse.ApproverInfo approverInfo = new ApprovalResponse.ApproverInfo();
         approverInfo.setUserId(user.getUserId());
         approverInfo.setEmployeeCode(user.getEmployeeCode());
         approverInfo.setUsername(user.getUsername());
-        approverInfo.setPosition(user.getPosition().getPositionName());
-        approverInfo.setDepartment(user.getDepartment().getDepartmentName());
+
+        // 🛡️ Position과 Department null 체크 (Lazy Loading 고려)
+        approverInfo.setPosition(user.getPosition() != null ?
+                user.getPosition().getPositionName() : null);
+        approverInfo.setDepartment(user.getDepartment() != null ?
+                user.getDepartment().getDepartmentName() : null);
+
         return approverInfo;
     }
 }
