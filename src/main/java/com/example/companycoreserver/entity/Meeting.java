@@ -27,9 +27,19 @@ public class Meeting {
     @Column(length = 200)
     private String location;                 // 회의 장소 (회의실명)
 
-    @Column
-    private String attachmentPath;           // 첨부파일 경로
+    // 첨부파일 관련 필드들
+    @Column(length = 255)
+    private String attachmentFilename;
 
+    @Column(length = 100)
+    private String attachmentContentType;
+
+    @Column
+    private Long attachmentSize;
+
+    @Lob
+    @Column(columnDefinition = "LONGBLOB")
+    private byte[] attachmentFile;
     @Column(nullable = false)
     private LocalDateTime createdAt;         // 생성일시
 
@@ -39,6 +49,22 @@ public class Meeting {
     // 생성자
     public Meeting() {
         this.createdAt = LocalDateTime.now();
+    }
+    // 🆕 첨부파일 메타데이터만 업데이트 (size 없이)
+    public void updateAttachment(String filename, String contentType, byte[] fileData) {
+        this.attachmentFilename = filename;
+        this.attachmentContentType = contentType;
+        this.attachmentFile = fileData;
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    // ✅ 첨부파일 제거
+    public void removeAttachment() {
+        this.attachmentFilename = null;
+        this.attachmentContentType = null;
+        this.attachmentSize = null;
+        this.attachmentFile = null;
+        this.updatedAt = LocalDateTime.now();
     }
 
     // Getter & Setter
@@ -89,14 +115,34 @@ public class Meeting {
     public void setLocation(String location) {
         this.location = location;
     }
-
-    public String getAttachmentPath() {
-        return attachmentPath;
+    public String getAttachmentFilename() {
+        return attachmentFilename;
+    }
+    public void setAttachmentFilename(String attachmentFilename) {
+        this.attachmentFilename = attachmentFilename;
     }
 
-    public void setAttachmentPath(String attachmentPath) {
-        this.attachmentPath = attachmentPath;
+    public String getAttachmentContentType() {
+        return attachmentContentType;
     }
+    public void setAttachmentContentType(String attachmentContentType) {
+        this.attachmentContentType = attachmentContentType;
+    }
+
+    public Long getAttachmentSize() {
+        return attachmentSize;
+    }
+    public void setAttachmentSize(Long attachmentSize) {
+        this.attachmentSize = attachmentSize;
+    }
+
+    public byte[] getAttachmentFile() {
+        return attachmentFile;
+    }
+    public void setAttachmentFile(byte[] attachmentFile) {
+        this.attachmentFile = attachmentFile;
+    }
+
 
     public LocalDateTime getCreatedAt() {
         return createdAt;

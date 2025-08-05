@@ -2,6 +2,8 @@ package com.example.companycoreserver.repository;
 
 import com.example.companycoreserver.entity.Meeting;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -10,15 +12,31 @@ import java.util.List;
 @Repository
 public interface MeetingRepository extends JpaRepository<Meeting, Long> {
 
-    // 특정 날짜의 회의 조회
+    // 기존 메서드들
     List<Meeting> findByStartTimeBetween(LocalDateTime startDate, LocalDateTime endDate);
-
-    // 회의실별 회의 조회
     List<Meeting> findByLocationContaining(String location);
-
-    // 제목으로 검색
     List<Meeting> findByTitleContaining(String title);
-
-    // 최신순 정렬
     List<Meeting> findAllByOrderByStartTimeDesc();
+
+
+    // 1. 현재 진행중인 회의 조회
+    @Query("SELECT m FROM Meeting m WHERE m.startTime <= :now AND m.endTime >= :now")
+    List<Meeting> findCurrentMeetings(@Param("now") LocalDateTime now);
+
+    // 2. 예정된 회의 조회 (미래 회의)
+    List<Meeting> findByStartTimeAfterOrderByStartTimeAsc(LocalDateTime now);
+
+    // 3. 완료된 회의 조회 (과거 회의)
+    List<Meeting> findByEndTimeBeforeOrderByStartTimeDesc(LocalDateTime now);
+
+
+    // 5. 오늘의 회의 조회
+    @Query("SELECT m FROM Meeting m WHERE DATE(m.startTime) = DATE(:date) ORDER BY m.startTime ASC")
+    List<Meeting> findMeetingsByDate(@Param("date") LocalDateTime date);
+
+    // 6. 이번 주 회의 조회
+    @Query("SELECT m FROM Meeting m WHERE m.startTime >= :weekStart AND m.startTime < :weekEnd ORDER BY m.startTime ASC")
+    List<Meeting> findMeetingsThisWeek(@Param("weekStart") LocalDateTime weekStart,
+                                       @Param("weekEnd") LocalDateTime weekEnd);
+
 }
