@@ -74,7 +74,7 @@ public class NoticeService {
                 notice.setAttachmentFile(fileData);
                 notice.setAttachmentSize((long) fileData.length);
                 
-                System.out.println("첨부파일 처리 완료: " + requestDto.getAttachmentFilename() + " (" + fileData.length + " bytes)");
+                System.out.println("첨부파일 처리 완료: " + requestDto.getAttachmentFilename() + " (" + fileData.length + " bytes) - Base64 내용 생략");
             } catch (Exception e) {
                 System.err.println("첨부파일 Base64 디코딩 실패: " + e.getMessage());
                 // 첨부파일 처리 실패 시 기본 정보만 저장

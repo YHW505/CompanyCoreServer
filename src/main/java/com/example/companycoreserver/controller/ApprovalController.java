@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -70,7 +71,12 @@ public class ApprovalController {
     public ResponseEntity<?> createApproval(@RequestBody Map<String, Object> request) {
         try {
             System.out.println("=== 결재 생성 요청 받음 ===");
-            System.out.println("Request body: " + request);
+            // Base64 인코딩된 첨부파일 내용은 로그에서 제외
+            Map<String, Object> logRequest = new HashMap<>(request);
+            if (logRequest.containsKey("attachmentContent")) {
+                logRequest.put("attachmentContent", "[Base64 내용 생략]");
+            }
+            System.out.println("Request body: " + logRequest);
 
             // 필수 필드 null 체크
             String title = (String) request.get("title");
@@ -240,10 +246,20 @@ public class ApprovalController {
     @GetMapping("/{approvalId}")
     public ResponseEntity<ApprovalResponse> getApprovalDetail(@PathVariable Long approvalId) {
         try {
+            System.out.println("=== 결재 상세 조회 요청 받음 - ID: " + approvalId + " ===");
             Approval approval = approvalService.getApprovalById(approvalId);
             ApprovalResponse response = approvalMapper.toResponse(approval);
+            
+            // 첨부파일 정보 로그 (내용은 생략)
+            if (response.getAttachmentFilename() != null) {
+                System.out.println("첨부파일 정보: " + response.getAttachmentFilename() + 
+                    " (크기: " + response.getAttachmentSize() + " bytes) - Base64 내용 생략");
+            }
+            
+            System.out.println("결재 상세 조회 성공: " + approvalId);
             return ResponseEntity.ok(response);
         } catch (RuntimeException e) {
+            System.err.println("결재 상세 조회 실패: " + e.getMessage());
             return ResponseEntity.notFound().build();
         }
     }
