@@ -46,6 +46,7 @@ public class NoticeService {
                 notice.hasAttachment(),                    // 첨부파일 여부
                 notice.getAttachmentFilename(),            // 파일명
                 notice.getAttachmentContentType(),         // MIME 타입
+                notice.getAttachmentSize(),                // 🆕 파일 크기
                 attachmentContent,                         // 🆕 첨부파일 내용 (Base64)
                 notice.getCreatedAt(),
                 notice.getUpdatedAt()
