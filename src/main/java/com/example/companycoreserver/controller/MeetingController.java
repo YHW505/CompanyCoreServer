@@ -27,6 +27,8 @@ public class MeetingController {
     public ResponseEntity<List<Meeting>> getMeetings(
             @RequestParam(required = false) String location,
             @RequestParam(required = false) String title,
+            @RequestParam(required = false) String author,
+            @RequestParam(required = false) String department,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
@@ -114,6 +116,13 @@ public class MeetingController {
             }
             if (meetingDetails.getLocation() != null) {
                 meeting.setLocation(meetingDetails.getLocation());
+            }
+            // 🆕 author와 department 업데이트 추가
+            if (meetingDetails.getAuthor() != null) {
+                meeting.setAuthor(meetingDetails.getAuthor());
+            }
+            if (meetingDetails.getDepartment() != null) {
+                meeting.setDepartment(meetingDetails.getDepartment());
             }
 
             // 첨부파일 정보 업데이트 (Entity 필드에 맞게 수정)
@@ -206,6 +215,7 @@ public class MeetingController {
         return ResponseEntity.ok(meetings);
     }
 
+
     // 🆕 회의록 첨부파일 다운로드
     @GetMapping("/{id}/attachment")
     public ResponseEntity<Meeting> downloadMeetingAttachment(@PathVariable Long id) {
@@ -220,10 +230,10 @@ public class MeetingController {
     @PutMapping("/{id}/attachment")
     public ResponseEntity<Meeting> uploadMeetingAttachment(@PathVariable Long id, @RequestBody Meeting attachmentData) {
         Optional<Meeting> optionalMeeting = meetingRepository.findById(id);
-        
+
         if (optionalMeeting.isPresent()) {
             Meeting meeting = optionalMeeting.get();
-            
+
             // 첨부파일 정보 업데이트
             if (attachmentData.getAttachmentFilename() != null) {
                 meeting.setAttachmentFilename(attachmentData.getAttachmentFilename());
@@ -237,18 +247,18 @@ public class MeetingController {
             if (attachmentData.getAttachmentContent() != null) {
                 meeting.setAttachmentContent(attachmentData.getAttachmentContent());
             }
-            
+
             // Base64 문자열을 바이트 배열로 변환하는 경우를 위한 처리
             // (클라이언트에서 Base64로 전송하는 경우)
-            if (attachmentData.getAttachmentFilename() != null && 
-                attachmentData.getAttachmentContentType() != null) {
+            if (attachmentData.getAttachmentFilename() != null &&
+                    attachmentData.getAttachmentContentType() != null) {
                 meeting.setUpdatedAt(LocalDateTime.now());
             }
-            
+
             Meeting updatedMeeting = meetingRepository.save(meeting);
             return ResponseEntity.ok(updatedMeeting);
         }
-        
+
         return ResponseEntity.notFound().build();
     }
 
@@ -256,15 +266,15 @@ public class MeetingController {
     @DeleteMapping("/{id}/attachment")
     public ResponseEntity<Meeting> deleteMeetingAttachment(@PathVariable Long id) {
         Optional<Meeting> optionalMeeting = meetingRepository.findById(id);
-        
+
         if (optionalMeeting.isPresent()) {
             Meeting meeting = optionalMeeting.get();
             meeting.removeAttachment();
-            
+
             Meeting updatedMeeting = meetingRepository.save(meeting);
             return ResponseEntity.ok(updatedMeeting);
         }
-        
+
         return ResponseEntity.notFound().build();
     }
 }
