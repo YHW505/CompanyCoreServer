@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.http.HttpHeaders;
 
 @RestController
 @RequestMapping("/api/notices")
@@ -214,7 +215,7 @@ public class NoticeController {
     }
 
     /**
-     * 🔧 첨부파일 업로드
+     * 🔧 첨부파일 업로드 (개선된 버전)
      * POST /api/notices/{id}/attachment
      */
     @PostMapping(value = "/{id}/attachment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -224,6 +225,14 @@ public class NoticeController {
         try {
             System.out.println("첨부파일 업로드 API 호출: 공지사항 ID=" + id + ", 파일명=" + file.getOriginalFilename());
 
+            // 파일 크기 검증 (50MB 제한)
+            if (file.getSize() > 50 * 1024 * 1024) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "파일 크기는 50MB를 초과할 수 없습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResult);
+            }
+
             if (file.isEmpty()) {
                 Map<String, Object> errorResult = new HashMap<>();
                 errorResult.put("success", false);
@@ -231,8 +240,30 @@ public class NoticeController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResult);
             }
 
-            String filename = file.getOriginalFilename();
+            // 파일 타입 검증
             String contentType = file.getContentType();
+            if (contentType == null) {
+                contentType = "application/octet-stream";
+            }
+
+            // 허용된 파일 타입 검증
+            if (!isAllowedFileType(contentType)) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "지원하지 않는 파일 타입입니다. 지원 형식: PDF, Word, Excel, 이미지, 텍스트 파일");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResult);
+            }
+
+            String filename = file.getOriginalFilename();
+            // 파일명이 null이거나 비어있을 경우 기본 파일명 생성
+            if (filename == null || filename.trim().isEmpty()) {
+                String extension = getExtensionFromContentType(contentType);
+                filename = "첨부파일_" + System.currentTimeMillis() + extension;
+            }
+
+            // 파일명에서 특수문자 제거 및 길이 제한
+            filename = sanitizeFilename(filename);
+            
             byte[] fileData = file.getBytes();
 
             NoticeResponse response = noticeService.uploadAttachment(id, filename, contentType, fileData);
@@ -262,6 +293,74 @@ public class NoticeController {
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
         }
+    }
+
+    /**
+     * 허용된 파일 타입인지 검증
+     */
+    private boolean isAllowedFileType(String contentType) {
+        if (contentType == null) return false;
+        
+        String lowerContentType = contentType.toLowerCase();
+        return lowerContentType.contains("pdf") ||
+               lowerContentType.contains("word") ||
+               lowerContentType.contains("excel") ||
+               lowerContentType.contains("image") ||
+               lowerContentType.contains("text") ||
+               lowerContentType.contains("powerpoint") ||
+               lowerContentType.contains("zip") ||
+               lowerContentType.contains("rar");
+    }
+
+    /**
+     * Content-Type에서 확장자 추출
+     */
+    private String getExtensionFromContentType(String contentType) {
+        if (contentType == null) return ".file";
+        
+        String lowerContentType = contentType.toLowerCase();
+        if (lowerContentType.contains("pdf")) return ".pdf";
+        if (lowerContentType.contains("word")) return ".docx";
+        if (lowerContentType.contains("excel")) return ".xlsx";
+        if (lowerContentType.contains("powerpoint")) return ".pptx";
+        if (lowerContentType.contains("image")) {
+            if (lowerContentType.contains("jpeg")) return ".jpg";
+            if (lowerContentType.contains("png")) return ".png";
+            if (lowerContentType.contains("gif")) return ".gif";
+            return ".jpg";
+        }
+        if (lowerContentType.contains("text")) return ".txt";
+        if (lowerContentType.contains("zip")) return ".zip";
+        if (lowerContentType.contains("rar")) return ".rar";
+        
+        return ".file";
+    }
+
+    /**
+     * 파일명 정리 (특수문자 제거, 길이 제한)
+     */
+    private String sanitizeFilename(String filename) {
+        if (filename == null) return "file";
+        
+        // 특수문자 제거 (한글, 영문, 숫자, 점, 하이픈, 언더스코어만 허용)
+        String sanitized = filename.replaceAll("[^a-zA-Z0-9가-힣._-]", "");
+        
+        // 길이 제한 (100자)
+        if (sanitized.length() > 100) {
+            int lastDotIndex = sanitized.lastIndexOf('.');
+            if (lastDotIndex > 0) {
+                String name = sanitized.substring(0, lastDotIndex);
+                String extension = sanitized.substring(lastDotIndex);
+                if (name.length() > 90) {
+                    name = name.substring(0, 90);
+                }
+                sanitized = name + extension;
+            } else {
+                sanitized = sanitized.substring(0, 100);
+            }
+        }
+        
+        return sanitized;
     }
 
     /**
