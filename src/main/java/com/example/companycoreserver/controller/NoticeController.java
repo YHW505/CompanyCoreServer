@@ -157,7 +157,7 @@ public class NoticeController {
                 simpleNotice.put("authorName", notice.getAuthorName());
                 simpleNotice.put("createdAt", notice.getCreatedAt());
                 simpleNotice.put("updatedAt", notice.getUpdatedAt());
-                simpleNotice.put("isImportant", notice.getIsImportant());
+//                simpleNotice.put("isImportant", notice.getIsImportant());
                 // 첨부파일 정보는 제외 (상세보기에서만 확인)
 
                 simpleNotices.add(simpleNotice);
