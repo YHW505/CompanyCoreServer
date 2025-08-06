@@ -32,8 +32,8 @@ public class NoticeService {
     private NoticeResponse convertToResponse(Notice notice) {
         // 🆕 첨부파일 내용을 Base64로 인코딩
         String attachmentContent = null;
-        if (notice.hasAttachment() && notice.getAttachmentFile() != null && notice.getAttachmentFile().length > 0) {
-            attachmentContent = java.util.Base64.getEncoder().encodeToString(notice.getAttachmentFile());
+        if (notice.hasAttachment() && notice.getAttachmentContent() != null && !notice.getAttachmentContent().isEmpty()) {
+            attachmentContent = notice.getAttachmentContent(); // 이미 Base64 문자열
         }
         
         return new NoticeResponse(
@@ -71,7 +71,7 @@ public class NoticeService {
                 // 첨부파일 정보 설정
                 notice.setAttachmentFilename(requestDto.getAttachmentFilename());
                 notice.setAttachmentContentType(requestDto.getAttachmentContentType());
-                notice.setAttachmentFile(fileData);
+                notice.setAttachmentContent(requestDto.getAttachmentContent()); // Base64 문자열
                 notice.setAttachmentSize((long) fileData.length);
                 
                 System.out.println("첨부파일 처리 완료: " + requestDto.getAttachmentFilename() + " (" + fileData.length + " bytes) - Base64 내용 생략");
@@ -128,7 +128,7 @@ public class NoticeService {
             notice.updateAttachment(
                     requestDto.getAttachmentFilename(),
                     requestDto.getAttachmentContentType(),
-                    notice.getAttachmentFile()         // 기존 파일 데이터 유지
+                    requestDto.getAttachmentContent()         // Base64 문자열
             );
         } else {
             System.out.println("첨부파일 정보 없음 - 기본 정보만 업데이트");
@@ -167,7 +167,8 @@ public class NoticeService {
         Long calculatedSize = (fileData != null) ? (long) fileData.length : 0L;
 
         // 🔧 4개 파라미터 메서드 호출
-        notice.updateAttachment(filename, contentType, fileData);
+        String base64Content = java.util.Base64.getEncoder().encodeToString(fileData);
+        notice.updateAttachment(filename, contentType, base64Content);
 
         System.out.println("첨부파일 업로드 완료: " + filename + " (크기: " + calculatedSize + " bytes)");
         return convertToResponse(notice);

@@ -159,10 +159,13 @@ public class TaskService {
         try {
             // 첨부파일이 있는 경우 처리
             if (attachmentFile != null && !attachmentFile.isEmpty()) {
+                // 바이트 배열을 Base64 문자열로 인코딩
+                String base64Content = java.util.Base64.getEncoder().encodeToString(attachmentFile.getBytes());
+                
                 task.updateAttachment(
                         attachmentFile.getOriginalFilename(),
                         attachmentFile.getContentType(),
-                        attachmentFile.getBytes()
+                        base64Content
                 );
                 // 파일 크기 설정
                 task.setAttachmentSize(attachmentFile.getSize());
@@ -242,10 +245,13 @@ public class TaskService {
                 Task task = taskOpt.get();
 
                 if (attachmentFile != null && !attachmentFile.isEmpty()) {
+                    // 바이트 배열을 Base64 문자열로 인코딩
+                    String base64Content = java.util.Base64.getEncoder().encodeToString(attachmentFile.getBytes());
+                    
                     task.updateAttachment(
                             attachmentFile.getOriginalFilename(),
                             attachmentFile.getContentType(),
-                            attachmentFile.getBytes()
+                            base64Content
                     );
                     task.setAttachmentSize(attachmentFile.getSize());
                 } else {

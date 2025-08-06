@@ -413,17 +413,20 @@ public class TaskController {
             if (taskOpt.isPresent()) {
                 Task task = taskOpt.get();
 
-                if (task.getAttachmentFile() != null && task.getAttachmentFilename() != null) {
+                if (task.getAttachmentContent() != null && task.getAttachmentFilename() != null) {
+                    // Base64 문자열을 바이트 배열로 디코딩
+                    byte[] fileBytes = java.util.Base64.getDecoder().decode(task.getAttachmentContent());
+                    
                     HttpHeaders headers = new HttpHeaders();
                     headers.setContentType(MediaType.parseMediaType(
                             task.getAttachmentContentType() != null ?
                                     task.getAttachmentContentType() : "application/octet-stream"));
                     headers.setContentDispositionFormData("attachment", task.getAttachmentFilename());
-                    headers.setContentLength(task.getAttachmentFile().length);
+                    headers.setContentLength(fileBytes.length);
 
                     return ResponseEntity.ok()
                             .headers(headers)
-                            .body(task.getAttachmentFile());
+                            .body(fileBytes);
                 } else {
                     return ResponseEntity.notFound().build();
                 }

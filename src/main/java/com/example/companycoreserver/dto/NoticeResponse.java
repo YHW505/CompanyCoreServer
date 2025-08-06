@@ -38,8 +38,8 @@ public class NoticeResponse {
             this.attachmentSize = notice.getAttachmentSize();
             
             // 🆕 첨부파일 내용을 Base64로 인코딩하여 설정
-            if (notice.getAttachmentFile() != null && notice.getAttachmentFile().length > 0) {
-                this.attachmentContent = Base64.getEncoder().encodeToString(notice.getAttachmentFile());
+            if (notice.getAttachmentContent() != null && !notice.getAttachmentContent().isEmpty()) {
+                this.attachmentContent = notice.getAttachmentContent(); // 이미 Base64 문자열
             }
         }
 

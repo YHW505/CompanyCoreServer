@@ -56,10 +56,6 @@ public class Approval {
     @Column(columnDefinition = "LONGTEXT")
     private String attachmentContent; // Base64 인코딩된 첨부파일 내용
 
-    @Lob
-    @Column(columnDefinition = "LONGBLOB")
-    private byte[] attachmentFile;
-
     @CreationTimestamp
     private LocalDateTime createdAt;
 
@@ -103,11 +99,11 @@ public class Approval {
         this.requestDate = LocalDateTime.now();
     }
 
-    // 🆕 첨부파일 메타데이터만 업데이트 (size 없이)
-    public void updateAttachment(String filename, String contentType, byte[] fileData) {
+    // 🆕 첨부파일 메타데이터만 업데이트 (Base64 문자열 방식)
+    public void updateAttachment(String filename, String contentType, String base64Content) {
         this.attachmentFilename = filename;
         this.attachmentContentType = contentType;
-        this.attachmentFile = fileData;
+        this.attachmentContent = base64Content;
         this.updatedAt = LocalDateTime.now();
     }
 
@@ -116,7 +112,7 @@ public class Approval {
         this.attachmentFilename = null;
         this.attachmentContentType = null;
         this.attachmentSize = null;
-        this.attachmentFile = null;
+        this.attachmentContent = null;
         this.updatedAt = LocalDateTime.now();
     }
 
@@ -223,14 +219,6 @@ public class Approval {
 
     public void setAttachmentContent(String attachmentContent) {
         this.attachmentContent = attachmentContent;
-    }
-
-    public byte[] getAttachmentFile() {
-        return attachmentFile;
-    }
-
-    public void setAttachmentFile(byte[] attachmentFile) {
-        this.attachmentFile = attachmentFile;
     }
 
     public LocalDateTime getCreatedAt() {
