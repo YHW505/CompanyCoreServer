@@ -38,6 +38,24 @@ public class ApprovalController {
         return ResponseEntity.ok(responses);
     }
 
+    // 🆕 내가 요청한 결재 목록 (페이지네이션 포함)
+    @GetMapping("/my-requests/{userId}/page")
+    public ResponseEntity<?> getMyRequestsWithPagination(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        
+        try {
+            var result = approvalService.getMyRequestsWithPagination(userId, page, size, sortBy, sortDir);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "내가 요청한 결재 목록 조회 실패: " + e.getMessage()));
+        }
+    }
+
     // ✅ 내가 결재해야 할 목록 - DTO 변환
     @GetMapping("/my-approvals/{userId}")
     public ResponseEntity<List<ApprovalResponse>> getMyApprovals(@PathVariable Long userId) {
@@ -52,6 +70,24 @@ public class ApprovalController {
         return ResponseEntity.ok(responses);
     }
 
+    // 🆕 내가 결재해야 할 목록 (페이지네이션 포함)
+    @GetMapping("/my-approvals/{userId}/page")
+    public ResponseEntity<?> getMyApprovalsWithPagination(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        
+        try {
+            var result = approvalService.getMyApprovalsWithPagination(userId, page, size, sortBy, sortDir);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "내가 결재해야 할 목록 조회 실패: " + e.getMessage()));
+        }
+    }
+
     // ✅ 내가 결재해야 할 대기중인 목록 - DTO 변환
     @GetMapping("/pending/{userId}")
     public ResponseEntity<List<ApprovalResponse>> getPendingApprovals(@PathVariable Long userId) {
@@ -64,6 +100,24 @@ public class ApprovalController {
         }
 
         return ResponseEntity.ok(responses);
+    }
+
+    // 🆕 내가 결재해야 할 대기중인 목록 (페이지네이션 포함)
+    @GetMapping("/pending/{userId}/page")
+    public ResponseEntity<?> getPendingApprovalsWithPagination(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        
+        try {
+            var result = approvalService.getPendingApprovalsWithPagination(userId, page, size, sortBy, sortDir);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "대기중인 결재 목록 조회 실패: " + e.getMessage()));
+        }
     }
 
     // 🔄 결재 요청 생성 - 첨부파일 메타데이터 처리

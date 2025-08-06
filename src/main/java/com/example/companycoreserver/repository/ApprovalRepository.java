@@ -9,6 +9,8 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 @Repository
 public interface ApprovalRepository extends JpaRepository<Approval, Long> {
@@ -41,4 +43,16 @@ public interface ApprovalRepository extends JpaRepository<Approval, Long> {
     // ✅ 최근 N일간의 결재 목록
     @Query("SELECT a FROM Approval a WHERE a.requestDate >= :fromDate ORDER BY a.requestDate DESC")
     List<Approval> findRecentApprovals(@Param("fromDate") LocalDateTime fromDate);
+
+    // 🆕 내가 요청한 결재 목록 (페이지네이션 포함)
+    @Query("SELECT a FROM Approval a WHERE a.requester.userId = :userId")
+    Page<Approval> findByRequesterId(@Param("userId") Long userId, Pageable pageable);
+
+    // 🆕 내가 결재해야 할 목록 (페이지네이션 포함)
+    @Query("SELECT a FROM Approval a WHERE a.approver.userId = :userId")
+    Page<Approval> findByApproverId(@Param("userId") Long userId, Pageable pageable);
+
+    // 🆕 내가 결재해야 할 대기중인 목록 (페이지네이션 포함)
+    @Query("SELECT a FROM Approval a WHERE a.approver.userId = :userId AND a.status = 'PENDING'")
+    Page<Approval> findPendingApprovalsByApproverId(@Param("userId") Long userId, Pageable pageable);
 }

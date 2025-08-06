@@ -12,6 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 @Service
 @Transactional
@@ -143,5 +149,56 @@ public class ApprovalService {
     public List<Approval> getRecentApprovals() {
         LocalDateTime weekAgo = LocalDateTime.now().minusDays(7);
         return approvalRepository.findRecentApprovals(weekAgo);
+    }
+
+    // 🆕 내가 요청한 결재 목록 (페이지네이션 포함)
+    public Map<String, Object> getMyRequestsWithPagination(Long userId, int page, int size, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        
+        Page<Approval> approvalPage = approvalRepository.findByRequesterId(userId, pageable);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", approvalPage.getContent());
+        response.put("totalElements", approvalPage.getTotalElements());
+        response.put("totalPages", approvalPage.getTotalPages());
+        response.put("currentPage", page);
+        response.put("size", size);
+        
+        return response;
+    }
+
+    // 🆕 내가 결재해야 할 목록 (페이지네이션 포함)
+    public Map<String, Object> getMyApprovalsWithPagination(Long userId, int page, int size, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        
+        Page<Approval> approvalPage = approvalRepository.findByApproverId(userId, pageable);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", approvalPage.getContent());
+        response.put("totalElements", approvalPage.getTotalElements());
+        response.put("totalPages", approvalPage.getTotalPages());
+        response.put("currentPage", page);
+        response.put("size", size);
+        
+        return response;
+    }
+
+    // 🆕 내가 결재해야 할 대기중인 목록 (페이지네이션 포함)
+    public Map<String, Object> getPendingApprovalsWithPagination(Long userId, int page, int size, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+        
+        Page<Approval> approvalPage = approvalRepository.findPendingApprovalsByApproverId(userId, pageable);
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", approvalPage.getContent());
+        response.put("totalElements", approvalPage.getTotalElements());
+        response.put("totalPages", approvalPage.getTotalPages());
+        response.put("currentPage", page);
+        response.put("size", size);
+        
+        return response;
     }
 }

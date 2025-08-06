@@ -187,6 +187,30 @@ public class TaskController {
         }
     }
 
+    // 🆕 특정 사용자의 특정 타입 작업 조회 (페이지네이션 포함)
+    @GetMapping("/assigned-to/{userId}/type/{taskType}/page")
+    public ResponseEntity<?> getTasksByAssignedToAndTypeWithPagination(
+            @RequestHeader("Authorization") String token,
+            @PathVariable Long userId,
+            @PathVariable TaskType taskType,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        try {
+            if (!isValidToken(token)) {
+                return ResponseEntity.status(401).build();
+            }
+
+            var result = taskService.getTasksByAssignedToAndTypeWithPagination(userId, taskType, page, size, sortBy, sortDir);
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("Error in getTasksByAssignedToAndTypeWithPagination: " + e.getMessage());
+            return ResponseEntity.status(500).build();
+        }
+    }
+
     // 🔍 날짜 범위로 작업 조회
     @GetMapping("/date-range")
     public ResponseEntity<List<Task>> getTasksByDateRange(

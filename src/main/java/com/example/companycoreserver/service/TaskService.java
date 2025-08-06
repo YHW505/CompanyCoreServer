@@ -11,6 +11,12 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 @Service
 public class TaskService {
@@ -315,6 +321,28 @@ public class TaskService {
         } catch (Exception e) {
             System.err.println("Error updating task status: " + e.getMessage());
             throw new RuntimeException("Failed to update task status", e);
+        }
+    }
+
+    // 🆕 특정 사용자의 특정 타입 작업 조회 (페이지네이션 포함)
+    public Map<String, Object> getTasksByAssignedToAndTypeWithPagination(Long assignedTo, TaskType taskType, int page, int size, String sortBy, String sortDir) {
+        try {
+            Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+            Pageable pageable = PageRequest.of(page, size, sort);
+            
+            Page<Task> taskPage = taskRepository.findByAssignedToAndTaskType(assignedTo, taskType, pageable);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("content", taskPage.getContent());
+            response.put("totalElements", taskPage.getTotalElements());
+            response.put("totalPages", taskPage.getTotalPages());
+            response.put("currentPage", page);
+            response.put("size", size);
+            
+            return response;
+        } catch (Exception e) {
+            System.err.println("Error fetching tasks by assignedTo and taskType with pagination: " + e.getMessage());
+            throw new RuntimeException("Failed to fetch tasks with pagination", e);
         }
     }
 }
