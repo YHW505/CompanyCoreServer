@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "tasks")
@@ -17,11 +19,13 @@ public class Task {
     @Column(name = "task_id")
     private Integer taskId;
 
-    @Column(name = "assigned_by")
-    private Long assignedBy;
+    // 🔄 기존 assignedBy는 createdBy로 변경 (업무 생성자)
+    @Column(name = "created_by")
+    private Long createdBy;
 
-    @Column(name = "assigned_to")
-    private Long assignedTo;
+    // 🔄 기존 assignedTo는 제거 (TaskAssignment 테이블로 분리)
+    // @Column(name = "assigned_to")
+    // private Long assignedTo;
 
     // ✅ TaskType enum 사용 (TASK, REPORT)
     @Enumerated(EnumType.STRING)
@@ -48,10 +52,10 @@ public class Task {
     @Column(columnDefinition = "LONGTEXT")
     private String attachmentContent; // Base64 인코딩된 첨부파일 내용
 
-    // ✅ TaskStatus enum 사용 (진행중, 완료, 보류, 결재종료, 반려)
+    // ✅ TaskStatus enum 사용 (TODO, IN_PROGRESS, DONE, CANCELLED)
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private TaskStatus status;
+    private TaskStatus status = TaskStatus.TODO; // 기본값: TODO
 
     @Column(name = "start_date")
     private LocalDate startDate;
@@ -62,37 +66,46 @@ public class Task {
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 
-    // 🔗 관계 매핑
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_by", insertable = false, updatable = false)
-    @JsonIgnoreProperties({"assignedTasks", "createdTasks", "attendances", "schedules"})
-    private User assignedByUser;
+    // 🆕 업데이트 시간 추가
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
+    // 🔗 관계 매핑 - 업무 생성자와의 관계
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_to", insertable = false, updatable = false)
+    @JoinColumn(name = "created_by", insertable = false, updatable = false)
     @JsonIgnoreProperties({"assignedTasks", "createdTasks", "attendances", "schedules"})
-    private User assignedToUser;
+    private User createdByUser;
+
+    // 🔄 기존 assignedToUser 제거 (TaskAssignment로 분리)
+    // @ManyToOne(fetch = FetchType.LAZY)
+    // @JoinColumn(name = "assigned_to", insertable = false, updatable = false)
+    // @JsonIgnoreProperties({"assignedTasks", "createdTasks", "attendances", "schedules"})
+    // private User assignedToUser;
+
+    // 🆕 TaskAssignment와의 일대다 관계 추가
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties({"task"})
+    private List<TaskAssignment> assignments = new ArrayList<>();
 
     // 기본 생성자
     public Task() {}
 
-    // 생성자
-    public Task(Long assignedBy, Long assignedTo, TaskType taskType, String title,
+    // 🔄 생성자 수정 (assignedTo 제거, createdBy로 변경)
+    public Task(Long createdBy, TaskType taskType, String title,
                 String description, TaskStatus status) {
-        this.assignedBy = assignedBy;
-        this.assignedTo = assignedTo;
+        this.createdBy = createdBy;
         this.taskType = taskType;
         this.title = title;
         this.description = description;
-        this.status = status;
+        this.status = status != null ? status : TaskStatus.TODO;
     }
 
-    // �� 첨부파일 메타데이터만 업데이트 (Base64 문자열 방식)
+    // ✅ 첨부파일 메타데이터만 업데이트 (Base64 문자열 방식)
     public void updateAttachment(String filename, String contentType, String base64Content) {
         this.attachmentFilename = filename;
         this.attachmentContentType = contentType;
         this.attachmentContent = base64Content;
-//        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     // ✅ 첨부파일 제거
@@ -101,18 +114,20 @@ public class Task {
         this.attachmentContentType = null;
         this.attachmentSize = null;
         this.attachmentContent = null;
-//        this.updatedAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     // Getter/Setter
     public Integer getTaskId() { return taskId; }
     public void setTaskId(Integer taskId) { this.taskId = taskId; }
 
-    public Long getAssignedBy() { return assignedBy; }
-    public void setAssignedBy(Long assignedBy) { this.assignedBy = assignedBy; }
+    // 🔄 assignedBy → createdBy로 변경
+    public Long getCreatedBy() { return createdBy; }
+    public void setCreatedBy(Long createdBy) { this.createdBy = createdBy; }
 
-    public Long getAssignedTo() { return assignedTo; }
-    public void setAssignedTo(Long assignedTo) { this.assignedTo = assignedTo; }
+    // 🔄 assignedTo 관련 메서드 제거
+    // public Long getAssignedTo() { return assignedTo; }
+    // public void setAssignedTo(Long assignedTo) { this.assignedTo = assignedTo; }
 
     public TaskType getTaskType() { return taskType; }
     public void setTaskType(TaskType taskType) { this.taskType = taskType; }
@@ -144,14 +159,12 @@ public class Task {
         this.attachmentSize = attachmentSize;
     }
 
-
     public String getAttachmentContent() {
         return attachmentContent;
     }
     public void setAttachmentContent(String attachmentContent) {
         this.attachmentContent = attachmentContent;
     }
-
 
     public TaskStatus getStatus() { return status; }
     public void setStatus(TaskStatus status) { this.status = status; }
@@ -165,23 +178,41 @@ public class Task {
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public User getAssignedByUser() { return assignedByUser; }
-    public void setAssignedByUser(User assignedByUser) { this.assignedByUser = assignedByUser; }
+    // 🆕 updatedAt getter/setter 추가
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
-    public User getAssignedToUser() { return assignedToUser; }
-    public void setAssignedToUser(User assignedToUser) { this.assignedToUser = assignedToUser; }
+    // 🔄 assignedByUser → createdByUser로 변경
+    public User getCreatedByUser() { return createdByUser; }
+    public void setCreatedByUser(User createdByUser) { this.createdByUser = createdByUser; }
+
+    // 🔄 assignedToUser 관련 메서드 제거
+    // public User getAssignedToUser() { return assignedToUser; }
+    // public void setAssignedToUser(User assignedToUser) { this.assignedToUser = assignedToUser; }
+
+    // 🆕 assignments getter/setter 추가
+    public List<TaskAssignment> getAssignments() { return assignments; }
+    public void setAssignments(List<TaskAssignment> assignments) { this.assignments = assignments; }
 
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.now();
+        if (status == null) {
+            status = TaskStatus.TODO;
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
     @Override
     public String toString() {
         return "Task{" +
                 "taskId=" + taskId +
-                ", assignedBy=" + assignedBy +
-                ", assignedTo=" + assignedTo +
+                ", createdBy=" + createdBy +
                 ", taskType=" + taskType +
                 ", title='" + title + '\'' +
                 ", status=" + status +
