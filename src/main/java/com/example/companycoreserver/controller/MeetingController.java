@@ -126,8 +126,8 @@ public class MeetingController {
             if (meetingDetails.getAttachmentSize() != null) {
                 meeting.setAttachmentSize(meetingDetails.getAttachmentSize());
             }
-            if (meetingDetails.getAttachmentFile() != null) {
-                meeting.setAttachmentFile(meetingDetails.getAttachmentFile());
+            if (meetingDetails.getAttachmentContent() != null) {
+                meeting.setAttachmentContent(meetingDetails.getAttachmentContent());
             }
 
             // 수정 시간은 @PreUpdate에서 자동 처리되지만 명시적으로 설정
@@ -234,8 +234,8 @@ public class MeetingController {
             if (attachmentData.getAttachmentSize() != null) {
                 meeting.setAttachmentSize(attachmentData.getAttachmentSize());
             }
-            if (attachmentData.getAttachmentFile() != null) {
-                meeting.setAttachmentFile(attachmentData.getAttachmentFile());
+            if (attachmentData.getAttachmentContent() != null) {
+                meeting.setAttachmentContent(attachmentData.getAttachmentContent());
             }
             
             // Base64 문자열을 바이트 배열로 변환하는 경우를 위한 처리
