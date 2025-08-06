@@ -4,11 +4,13 @@ import com.example.companycoreserver.dto.ApprovalResponse;
 import com.example.companycoreserver.entity.Approval;
 import com.example.companycoreserver.mapper.ApprovalMapper;
 import com.example.companycoreserver.service.ApprovalService;
+import com.example.companycoreserver.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +25,9 @@ public class ApprovalController {
 
     @Autowired
     private ApprovalMapper approvalMapper;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     // ✅ 내가 요청한 결재 목록 - DTO 변환
     @GetMapping("/my-requests/{userId}")
@@ -256,18 +261,26 @@ public class ApprovalController {
 
     // ✅ 내가 요청한 결재 삭제 (요청자만 가능)
     @DeleteMapping("/my-request/{approvalId}")
-    public ResponseEntity<?> deleteMyRequest(@PathVariable Long approvalId, @RequestBody Map<String, Object> request) {
+    public ResponseEntity<?> deleteMyRequest(@PathVariable Long approvalId, HttpServletRequest request) {
         try {
-            Object requesterIdObj = request.get("requesterId");
-            if (requesterIdObj == null) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "success", false,
-                        "message", "요청자 ID는 필수입니다.",
-                        "approvalId", approvalId
-                ));
+            // JWT 토큰에서 사용자 ID 추출
+            String token = extractTokenFromRequest(request);
+            if (token == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of(
+                                "success", false,
+                                "message", "인증 토큰이 필요합니다."
+                        ));
             }
 
-            Long requesterId = Long.valueOf(requesterIdObj.toString());
+            Long requesterId = jwtUtil.getUserIdFromToken(token);
+            if (requesterId == null) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of(
+                                "success", false,
+                                "message", "유효하지 않은 토큰입니다."
+                        ));
+            }
 
             approvalService.deleteMyRequest(approvalId, requesterId);
 
@@ -293,6 +306,15 @@ public class ApprovalController {
                             "error", e.getMessage()
                     ));
         }
+    }
+
+    // JWT 토큰 추출 헬퍼 메서드
+    private String extractTokenFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
     }
 
 
@@ -329,6 +351,56 @@ public class ApprovalController {
         }
 
         return ResponseEntity.ok(responses);
+    }
+
+    // 🆕 결재 요청 수정
+    @PutMapping("/{approvalId}")
+    public ResponseEntity<?> updateApproval(@PathVariable Long approvalId, @RequestBody Map<String, Object> request) {
+        try {
+            System.out.println("=== 결재 수정 요청 받음 - ID: " + approvalId + " ===");
+            
+            // 필수 필드 null 체크
+            String title = (String) request.get("title");
+            if (title == null || title.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("제목은 필수입니다.");
+            }
+
+            String content = (String) request.get("content");
+
+            // 첨부파일 메타데이터 추출
+            String attachmentFilename = (String) request.get("attachmentFilename");
+            String attachmentContentType = (String) request.get("attachmentContentType");
+            String attachmentContent = (String) request.get("attachmentContent");
+            Long attachmentSize = null;
+
+            // attachmentSize 안전한 변환
+            Object attachmentSizeObj = request.get("attachmentSize");
+            if (attachmentSizeObj != null) {
+                try {
+                    attachmentSize = Long.valueOf(attachmentSizeObj.toString());
+                } catch (NumberFormatException e) {
+                    return ResponseEntity.badRequest().body("첨부파일 크기는 숫자여야 합니다.");
+                }
+            }
+
+            // 결재 수정
+            Approval updatedApproval = approvalService.updateApproval(approvalId, title, content, 
+                    attachmentFilename, attachmentContentType, attachmentSize, attachmentContent);
+
+            // Entity → DTO 변환
+            ApprovalResponse response = approvalMapper.toResponse(updatedApproval);
+
+            System.out.println("결재 수정 성공: " + approvalId);
+            return ResponseEntity.ok(response);
+
+        } catch (RuntimeException e) {
+            System.err.println("결재 수정 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            System.err.println("결재 수정 중 오류 발생: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("결재 수정 중 오류가 발생했습니다: " + e.getMessage());
+        }
     }
 
     // 🆕 최근 7일간의 결재 목록 - DTO 변환

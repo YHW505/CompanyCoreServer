@@ -125,19 +125,11 @@ public class MeetingController {
                 meeting.setDepartment(meetingDetails.getDepartment());
             }
 
-            // 첨부파일 정보 업데이트 (Entity 필드에 맞게 수정)
-            if (meetingDetails.getAttachmentFilename() != null) {
-                meeting.setAttachmentFilename(meetingDetails.getAttachmentFilename());
-            }
-            if (meetingDetails.getAttachmentContentType() != null) {
-                meeting.setAttachmentContentType(meetingDetails.getAttachmentContentType());
-            }
-            if (meetingDetails.getAttachmentSize() != null) {
-                meeting.setAttachmentSize(meetingDetails.getAttachmentSize());
-            }
-            if (meetingDetails.getAttachmentContent() != null) {
-                meeting.setAttachmentContent(meetingDetails.getAttachmentContent());
-            }
+            // 첨부파일 정보 업데이트 (null 값도 허용하여 삭제 처리)
+            meeting.setAttachmentFilename(meetingDetails.getAttachmentFilename());
+            meeting.setAttachmentContentType(meetingDetails.getAttachmentContentType());
+            meeting.setAttachmentSize(meetingDetails.getAttachmentSize());
+            meeting.setAttachmentContent(meetingDetails.getAttachmentContent());
 
             // 수정 시간은 @PreUpdate에서 자동 처리되지만 명시적으로 설정
             meeting.setUpdatedAt(LocalDateTime.now());

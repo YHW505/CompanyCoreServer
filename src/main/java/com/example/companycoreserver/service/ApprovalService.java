@@ -105,6 +105,34 @@ public class ApprovalService {
         return approvalRepository.save(approval);
     }
 
+    // 🆕 결재 요청 수정
+    public Approval updateApproval(Long approvalId, String title, String content,
+                                 String attachmentFilename, String attachmentContentType, 
+                                 Long attachmentSize, String attachmentContent) {
+        Approval approval = approvalRepository.findById(approvalId)
+                .orElseThrow(() -> new RuntimeException("결재 요청을 찾을 수 없습니다."));
+
+        // 이미 처리된 결재는 수정 불가
+        if (!approval.isPending()) {
+            throw new RuntimeException("이미 처리된 결재는 수정할 수 없습니다.");
+        }
+
+        // 기본 정보 업데이트
+        approval.setTitle(title);
+        approval.setContent(content);
+
+        // 첨부파일 정보 업데이트 (null 값도 허용하여 삭제 처리)
+        approval.setAttachmentFilename(attachmentFilename);
+        approval.setAttachmentContentType(attachmentContentType);
+        approval.setAttachmentSize(attachmentSize);
+        approval.setAttachmentContent(attachmentContent);
+
+        // 수정 시간 업데이트
+        approval.setUpdatedAt(LocalDateTime.now());
+
+        return approvalRepository.save(approval);
+    }
+
 
     // ✅ 내가 요청한 결재 삭제 (요청자만 가능)
     public void deleteMyRequest(Long approvalId, Long requesterId) {
