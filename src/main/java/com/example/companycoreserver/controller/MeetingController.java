@@ -11,7 +11,10 @@ import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -32,7 +35,8 @@ public class MeetingController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
-            @RequestParam(required = false) String period // "current", "upcoming", "past", "thisweek"
+            @RequestParam(required = false) String period, // "current", "upcoming", "past", "thisweek"
+            @RequestParam(required = false, defaultValue = "false") boolean simple // 간단한 버전 여부
     ) {
         List<Meeting> meetings;
         LocalDateTime now = LocalDateTime.now();
@@ -79,6 +83,32 @@ public class MeetingController {
         Optional<Meeting> meeting = meetingRepository.findById(id);
         return meeting.map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    // 🆕 간단한 회의 목록 조회 (첨부파일 제외)
+    @GetMapping("/simple")
+    public ResponseEntity<List<Map<String, Object>>> getMeetingsSimple() {
+        List<Meeting> meetings = meetingRepository.findAllByOrderByStartTimeDesc();
+        List<Map<String, Object>> simpleMeetings = new ArrayList<>();
+        
+        for (Meeting meeting : meetings) {
+            Map<String, Object> simpleMeeting = new HashMap<>();
+            simpleMeeting.put("meetingId", meeting.getMeetingId());
+            simpleMeeting.put("title", meeting.getTitle());
+            simpleMeeting.put("description", meeting.getDescription());
+            simpleMeeting.put("startTime", meeting.getStartTime());
+            simpleMeeting.put("endTime", meeting.getEndTime());
+            simpleMeeting.put("location", meeting.getLocation());
+            simpleMeeting.put("department", meeting.getDepartment());
+            simpleMeeting.put("author", meeting.getAuthor());
+            simpleMeeting.put("createdAt", meeting.getCreatedAt());
+            simpleMeeting.put("updatedAt", meeting.getUpdatedAt());
+            // 첨부파일 정보는 제외 (상세보기에서만 확인)
+            
+            simpleMeetings.add(simpleMeeting);
+        }
+        
+        return ResponseEntity.ok(simpleMeetings);
     }
 
     // 회의 생성

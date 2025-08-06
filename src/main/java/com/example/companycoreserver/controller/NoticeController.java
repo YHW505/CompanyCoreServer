@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +67,8 @@ public class NoticeController {
     @GetMapping
     public ResponseEntity<Map<String, Object>> getAllNotices(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "false") boolean simple) {
         try {
             System.out.println("공지사항 전체 조회 API 호출: page=" + page + ", size=" + size);
 
@@ -127,6 +129,57 @@ public class NoticeController {
             Map<String, Object> errorResult = new HashMap<>();
             errorResult.put("success", false);
             errorResult.put("message", "공지사항 조회에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
+
+    /**
+     * 🆕 간단한 공지사항 목록 조회 (첨부파일 제외)
+     * GET /api/notices/simple
+     */
+    @GetMapping("/simple")
+    public ResponseEntity<Map<String, Object>> getNoticesSimple(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            System.out.println("간단한 공지사항 목록 조회 API 호출: page=" + page + ", size=" + size);
+
+            Page<NoticeResponse> noticePage = noticeService.getAllNotices(page, size);
+            List<Map<String, Object>> simpleNotices = new ArrayList<>();
+
+            for (NoticeResponse notice : noticePage.getContent()) {
+                Map<String, Object> simpleNotice = new HashMap<>();
+                simpleNotice.put("id", notice.getId());
+                simpleNotice.put("title", notice.getTitle());
+                simpleNotice.put("content", notice.getContent());
+                simpleNotice.put("authorDepartment", notice.getAuthorDepartment());
+                simpleNotice.put("authorName", notice.getAuthorName());
+                simpleNotice.put("createdAt", notice.getCreatedAt());
+                simpleNotice.put("updatedAt", notice.getUpdatedAt());
+                simpleNotice.put("isImportant", notice.getIsImportant());
+                // 첨부파일 정보는 제외 (상세보기에서만 확인)
+
+                simpleNotices.add(simpleNotice);
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "간단한 공지사항 목록을 성공적으로 조회했습니다.");
+            result.put("data", simpleNotices);
+            result.put("totalElements", noticePage.getTotalElements());
+            result.put("totalPages", noticePage.getTotalPages());
+            result.put("currentPage", page);
+            result.put("size", size);
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("간단한 공지사항 조회 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "간단한 공지사항 조회에 실패했습니다: " + e.getMessage());
 
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
         }
