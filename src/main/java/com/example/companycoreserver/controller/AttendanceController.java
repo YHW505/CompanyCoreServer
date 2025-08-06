@@ -255,11 +255,11 @@ public class AttendanceController {
 
     // 14. 최근 출근 기록 5개 조회 (전체)
     @GetMapping("/recent")
-    public ResponseEntity<Map<String, Object>> getRecentAttendances() {
+    public ResponseEntity<Map<String, Object>> getRecentAttendances(@RequestParam Long userId) {
         try {
-            System.out.println("최근 출근 기록 조회 API 호출");
+            System.out.println("사용자 " + userId + "의 최근 출근 기록 조회 API 호출");
 
-            List<Attendance> attendances = attendanceService.getRecentAttendances();
+            List<Attendance> attendances = attendanceService.getRecentAttendancesByUserId(userId);
             List<AttendanceResponse> attendanceResponses = convertToSafeDTOList(attendances);
 
             Map<String, Object> result = new HashMap<>();
@@ -267,6 +267,7 @@ public class AttendanceController {
             result.put("message", "최근 출근 기록을 성공적으로 조회했습니다.");
             result.put("data", attendanceResponses);
             result.put("count", attendanceResponses.size());
+            result.put("userId", userId);
 
             return ResponseEntity.ok(result);
 
