@@ -44,6 +44,29 @@ public class ApprovalService {
         return approvalRepository.findPendingApprovalsByApproverId(userId);
     }
 
+    // 🆕 부서별 결재 목록 조회 (기본)
+    public List<Approval> getApprovalsByDepartment(String department) {
+        return approvalRepository.findByRequesterDepartmentOrderByRequestDateDesc(department);
+    }
+
+    // 🆕 부서별 결재 목록 조회 (페이지네이션 포함)
+    public Map<String, Object> getApprovalsByDepartmentWithPagination(String department, int page, int size, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        Page<Approval> approvalPage = approvalRepository.findByRequesterDepartment(department, pageable);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", approvalPage.getContent());
+        response.put("totalElements", approvalPage.getTotalElements());
+        response.put("totalPages", approvalPage.getTotalPages());
+        response.put("currentPage", page);
+        response.put("size", size);
+        response.put("department", department);
+
+        return response;
+    }
+
     // 🔄 결재 요청 생성 - 첨부파일 파라미터 수정
         public Approval createApproval(String title, String content, Long requesterId, Long approverId,
                                  String attachmentFilename, String attachmentContentType, Long attachmentSize,

@@ -27,6 +27,12 @@ public interface ApprovalRepository extends JpaRepository<Approval, Long> {
     @Query("SELECT a FROM Approval a WHERE a.approver.userId = :userId AND a.status = 'PENDING' ORDER BY a.requestDate DESC")
     List<Approval> findPendingApprovalsByApproverId(@Param("userId") Long userId);
 
+    // 🆕 부서별 결재 목록 조회 (기본) - 요청일 기준 내림차순 정렬
+    List<Approval> findByRequesterDepartmentOrderByRequestDateDesc(String department);
+
+    // 🆕 부서별 결재 목록 조회 (페이지네이션 포함)
+    Page<Approval> findByRequesterDepartment(String department, Pageable pageable);
+
     // ✅ 상태별 결재 목록
     List<Approval> findByStatusOrderByRequestDateDesc(ApprovalStatus status);
 

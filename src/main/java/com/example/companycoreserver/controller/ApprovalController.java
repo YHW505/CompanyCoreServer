@@ -118,6 +118,35 @@ public class ApprovalController {
         return ResponseEntity.ok(responses);
     }
 
+    // 🆕 부서별 결재 목록 조회 (기본)
+    @GetMapping("/department/{department}")
+    public ResponseEntity<List<Approval>> getApprovalsByDepartment(
+            @PathVariable String department) {
+        try {
+            List<Approval> approvals = approvalService.getApprovalsByDepartment(department);
+            return ResponseEntity.ok(approvals);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // 🆕 부서별 결재 목록 조회 (페이지네이션 포함)
+    @GetMapping("/department/{department}/page")
+    public ResponseEntity<Map<String, Object>> getApprovalsByDepartmentWithPagination(
+            @PathVariable String department,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "requestDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        try {
+            Map<String, Object> result = approvalService.getApprovalsByDepartmentWithPagination(
+                    department, page, size, sortBy, sortDir);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     // 🆕 내가 결재해야 할 목록 (페이지네이션 포함)
     @GetMapping("/my-approvals/{userId}/page")
     public ResponseEntity<?> getMyApprovalsWithPagination(
