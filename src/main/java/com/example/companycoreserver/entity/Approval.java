@@ -99,6 +99,22 @@ public class Approval {
         this.requestDate = LocalDateTime.now();
     }
 
+    // 🆕 첨부파일 내용을 포함한 생성자 추가
+    public Approval(String title, String content, User requester, User approver,
+                    String attachmentFilename, String attachmentContentType, Long attachmentSize,
+                    String attachmentContent) {
+        this.title = title;
+        this.content = content;
+        this.requester = requester;
+        this.approver = approver;
+        this.attachmentFilename = attachmentFilename;
+        this.attachmentContentType = attachmentContentType;
+        this.attachmentSize = attachmentSize;
+        this.attachmentContent = attachmentContent;
+        this.status = ApprovalStatus.PENDING;
+        this.requestDate = LocalDateTime.now();
+    }
+
     // 🆕 첨부파일 메타데이터만 업데이트 (Base64 문자열 방식)
     public void updateAttachment(String filename, String contentType, String base64Content) {
         this.attachmentFilename = filename;

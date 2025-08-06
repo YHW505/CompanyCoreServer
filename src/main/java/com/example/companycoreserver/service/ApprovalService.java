@@ -56,12 +56,7 @@ public class ApprovalService {
 
         // 🔄 새로운 생성자 사용 (첨부파일 메타데이터 포함)
         Approval approval = new Approval(title, content, requester, approver,
-                attachmentFilename, attachmentContentType, attachmentSize);
-        
-        // 첨부파일 내용 설정
-        if (attachmentContent != null && !attachmentContent.trim().isEmpty()) {
-            approval.setAttachmentContent(attachmentContent);
-        }
+                attachmentFilename, attachmentContentType, attachmentSize, attachmentContent);
         
         return approvalRepository.save(approval);
     }
