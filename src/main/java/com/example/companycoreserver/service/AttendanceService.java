@@ -265,6 +265,11 @@ public class AttendanceService {
         }
     }
 
+    // 최근 5개 출근 기록 조회 (전체)
+    public List<Attendance> getRecentAttendances() {
+        return attendanceRepository.findTop5ByOrderByCheckInDesc();
+    }
+
     // ===== 🔍 상태별 조회 메서드 =====
 
     // 9. 상태별 출근 기록 조회

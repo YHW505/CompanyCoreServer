@@ -38,6 +38,9 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     // - 특정 날짜의 특정 상태 출근 기록 조회 (정상출근자, 지각자)
     List<Attendance> findByWorkDateAndStatus(LocalDate workDate, AttendanceStatus status);
 
+    // 최근 5개 출근 기록 조회 (전체)
+    List<Attendance> findTop5ByOrderByCheckInDesc();
+
     // - 미퇴근자 조회
     List<Attendance> findByCheckOutIsNull();
 

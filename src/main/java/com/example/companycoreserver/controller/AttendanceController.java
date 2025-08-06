@@ -6,6 +6,7 @@ import com.example.companycoreserver.entity.Enum.AttendanceStatus;
 import com.example.companycoreserver.service.AttendanceService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
@@ -249,6 +250,34 @@ public class AttendanceController {
         } catch (Exception e) {
             System.err.println("Error in getMonthlyAttendanceStats: " + e.getMessage());
             return ResponseEntity.status(500).build();
+        }
+    }
+
+    // 14. 최근 출근 기록 5개 조회 (전체)
+    @GetMapping("/recent")
+    public ResponseEntity<Map<String, Object>> getRecentAttendances() {
+        try {
+            System.out.println("최근 출근 기록 조회 API 호출");
+
+            List<Attendance> attendances = attendanceService.getRecentAttendances();
+            List<AttendanceResponse> attendanceResponses = convertToSafeDTOList(attendances);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "최근 출근 기록을 성공적으로 조회했습니다.");
+            result.put("data", attendanceResponses);
+            result.put("count", attendanceResponses.size());
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("최근 출근 기록 조회 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "최근 출근 기록 조회에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
         }
     }
 
