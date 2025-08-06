@@ -61,14 +61,24 @@ public class ApprovalController {
             // simpleResponse.put("attachmentFilename", approval.getAttachmentFilename());
             // simpleResponse.put("attachmentSize", approval.getAttachmentSize());
             
-            // 사용자 정보 (간단한 형태)
-            if (approval.getRequester() != null) {
-                Map<String, Object> requesterInfo = new HashMap<>();
-                requesterInfo.put("username", approval.getRequester().getUsername());
-                requesterInfo.put("department", approval.getRequester().getDepartment() != null ? 
-                    approval.getRequester().getDepartment().getDepartmentName() : "Unknown");
-                simpleResponse.put("requester", requesterInfo);
-            }
+                         // 사용자 정보 (간단한 형태)
+             if (approval.getRequester() != null) {
+                 Map<String, Object> requesterInfo = new HashMap<>();
+                 requesterInfo.put("username", approval.getRequester().getUsername());
+                 
+                 // 부서 정보 디버깅
+                 String departmentName = "";
+                 if (approval.getRequester().getDepartment() != null) {
+                     departmentName = approval.getRequester().getDepartment().getDepartmentName();
+                     System.out.println("🔍 부서 정보 확인 - 사용자: " + approval.getRequester().getUsername() + 
+                                      ", 부서: " + departmentName);
+                 } else {
+                     System.out.println("⚠️ 부서 정보 없음 - 사용자: " + approval.getRequester().getUsername());
+                 }
+                 
+                 requesterInfo.put("department", departmentName);
+                 simpleResponse.put("requester", requesterInfo);
+             }
             
             responses.add(simpleResponse);
         }
