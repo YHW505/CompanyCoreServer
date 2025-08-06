@@ -43,6 +43,39 @@ public class ApprovalController {
         return ResponseEntity.ok(responses);
     }
 
+    // 🆕 내가 요청한 결재 목록 (간단한 버전 - 성능 최적화)
+    @GetMapping("/my-requests/{userId}/simple")
+    public ResponseEntity<List<Map<String, Object>>> getMyRequestsSimple(@PathVariable Long userId) {
+        List<Approval> approvals = approvalService.getMyRequests(userId);
+
+        // 간단한 Map 형태로 변환하여 성능 최적화
+        List<Map<String, Object>> responses = new ArrayList<>();
+        for (Approval approval : approvals) {
+            Map<String, Object> simpleResponse = new HashMap<>();
+            simpleResponse.put("id", approval.getId());
+            simpleResponse.put("title", approval.getTitle());
+            simpleResponse.put("content", approval.getContent());
+            simpleResponse.put("status", approval.getStatus());
+            simpleResponse.put("requestDate", approval.getRequestDate());
+            // 첨부파일 정보는 목록에서 제외 (상세보기에서만 확인)
+            // simpleResponse.put("attachmentFilename", approval.getAttachmentFilename());
+            // simpleResponse.put("attachmentSize", approval.getAttachmentSize());
+            
+            // 사용자 정보 (간단한 형태)
+            if (approval.getRequester() != null) {
+                Map<String, Object> requesterInfo = new HashMap<>();
+                requesterInfo.put("username", approval.getRequester().getUsername());
+                requesterInfo.put("department", approval.getRequester().getDepartment() != null ? 
+                    approval.getRequester().getDepartment().getDepartmentName() : "Unknown");
+                simpleResponse.put("requester", requesterInfo);
+            }
+            
+            responses.add(simpleResponse);
+        }
+
+        return ResponseEntity.ok(responses);
+    }
+
     // 🆕 내가 요청한 결재 목록 (페이지네이션 포함)
     @GetMapping("/my-requests/{userId}/page")
     public ResponseEntity<?> getMyRequestsWithPagination(
@@ -130,12 +163,7 @@ public class ApprovalController {
     public ResponseEntity<?> createApproval(@RequestBody Map<String, Object> request) {
         try {
             System.out.println("=== 결재 생성 요청 받음 ===");
-            // Base64 인코딩된 첨부파일 내용은 로그에서 제외
-            Map<String, Object> logRequest = new HashMap<>(request);
-            if (logRequest.containsKey("attachmentContent")) {
-                logRequest.put("attachmentContent", "[Base64 내용 생략]");
-            }
-            System.out.println("Request body: " + logRequest);
+            System.out.println("Request body: " + request);
 
             // 필수 필드 null 체크
             String title = (String) request.get("title");
@@ -325,12 +353,6 @@ public class ApprovalController {
             System.out.println("=== 결재 상세 조회 요청 받음 - ID: " + approvalId + " ===");
             Approval approval = approvalService.getApprovalById(approvalId);
             ApprovalResponse response = approvalMapper.toResponse(approval);
-            
-            // 첨부파일 정보 로그 (내용은 생략)
-            if (response.getAttachmentFilename() != null) {
-                System.out.println("첨부파일 정보: " + response.getAttachmentFilename() + 
-                    " (크기: " + response.getAttachmentSize() + " bytes) - Base64 내용 생략");
-            }
             
             System.out.println("결재 상세 조회 성공: " + approvalId);
             return ResponseEntity.ok(response);

@@ -56,10 +56,20 @@ public class UserUpdateController {
                         .body(new UserUpdateResponse(false, "유효하지 않은 토큰입니다."));
             }
 
-            // Request의 userId와 JWT의 userId 일치 확인 (보안)
+            // 인사팀 권한 확인 - 다른 사용자 정보 수정 시 인사팀 부서인지 확인
             if (request.getUserId() != null && !request.getUserId().equals(jwtUserId)) {
-                return ResponseEntity.badRequest()
-                        .body(new UserUpdateResponse(false, "권한이 없습니다."));
+                // 현재 로그인한 사용자의 부서 정보 조회
+                Optional<User> currentUser = userService.getUserById(jwtUserId);
+                if (!currentUser.isPresent()) {
+                    return ResponseEntity.badRequest()
+                            .body(new UserUpdateResponse(false, "사용자 정보를 찾을 수 없습니다."));
+                }
+                
+                User user = currentUser.get();
+                if (user.getDepartment() == null || !"인사팀".equals(user.getDepartment().getDepartmentName())) {
+                    return ResponseEntity.badRequest()
+                            .body(new UserUpdateResponse(false, "인사팀만 다른 사용자 정보를 수정할 수 있습니다."));
+                }
             }
 
             // Request에 userId가 없으면 JWT에서 추출한 값으로 설정
@@ -215,8 +225,35 @@ public class UserUpdateController {
                 return ResponseEntity.status(401).build();
             }
 
-            Optional<User> user = userService.getUserById(userId);
-            if (!user.isPresent()) {
+            // JWT에서 사용자 ID 추출
+            String jwtToken = null;
+            if (token != null && token.startsWith("Bearer ")) {
+                jwtToken = token.substring(7);
+            }
+            
+            Long requestUserId = jwtUtil.getUserIdFromToken(jwtToken);
+            if (requestUserId == null) {
+                return ResponseEntity.badRequest()
+                        .body(new UserUpdateResponse(false, "유효하지 않은 토큰입니다."));
+            }
+
+            // 인사팀 권한 확인 - 다른 사용자 부서/직급 변경 시 인사팀 부서인지 확인
+            if (!requestUserId.equals(userId)) {
+                Optional<User> currentUser = userService.getUserById(requestUserId);
+                if (!currentUser.isPresent()) {
+                    return ResponseEntity.badRequest()
+                            .body(new UserUpdateResponse(false, "사용자 정보를 찾을 수 없습니다."));
+                }
+                
+                User user = currentUser.get();
+                if (user.getDepartment() == null || !"인사팀".equals(user.getDepartment().getDepartmentName())) {
+                    return ResponseEntity.status(403)
+                            .body(new UserUpdateResponse(false, "인사팀만 다른 사용자의 부서/직급을 변경할 수 있습니다."));
+                }
+            }
+
+            Optional<User> targetUser = userService.getUserById(userId);
+            if (!targetUser.isPresent()) {
                 return ResponseEntity.notFound().build();
             }
 
@@ -252,14 +289,20 @@ public class UserUpdateController {
                         .body(new UserUpdateResponse(false, "유효하지 않은 토큰입니다."));
             }
 
-            // 관리자만 다른 사용자 삭제 가능하도록 제한
-//            if (!requestUserId.equals(userId)) {
-                // 여기에 관리자 권한 체크 로직 추가
-                // if (!requestUser.get().isAdmin()) {
-                //     return ResponseEntity.status(403)
-                //             .body(new UserUpdateResponse(false, "다른 사용자를 삭제할 권한이 없습니다."));
-                // }
-//            }
+            // 인사팀 권한 확인 - 다른 사용자 삭제 시 인사팀 부서인지 확인
+            if (!requestUserId.equals(userId)) {
+                Optional<User> currentUser = userService.getUserById(requestUserId);
+                if (!currentUser.isPresent()) {
+                    return ResponseEntity.badRequest()
+                            .body(new UserUpdateResponse(false, "사용자 정보를 찾을 수 없습니다."));
+                }
+                
+                User user = currentUser.get();
+                if (user.getDepartment() == null || !"인사팀".equals(user.getDepartment().getDepartmentName())) {
+                    return ResponseEntity.status(403)
+                            .body(new UserUpdateResponse(false, "인사팀만 다른 사용자를 삭제할 수 있습니다."));
+                }
+            }
 
 
             // 자기 자신은 삭제할 수 없도록 제한

@@ -38,11 +38,6 @@ public class NoticeController {
     public ResponseEntity<Map<String, Object>> createNotice(@RequestBody NoticeRequest requestDto) {
         try {
             System.out.println("공지사항 생성 API 호출: " + requestDto.getTitle());
-            // 첨부파일 정보 로그 (내용은 생략)
-            if (requestDto.getAttachmentFilename() != null) {
-                System.out.println("첨부파일 정보: " + requestDto.getAttachmentFilename() + 
-                    " (크기: " + requestDto.getAttachmentSize() + " bytes) - Base64 내용 생략");
-            }
 
             NoticeResponse response = noticeService.createNotice(requestDto);
 
