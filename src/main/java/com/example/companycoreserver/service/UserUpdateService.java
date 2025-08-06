@@ -187,14 +187,17 @@ public class UserUpdateService {
 
         // 전화번호 업데이트
         if (isValidString(request.getPhone())) {
-            String phone = request.getPhone().trim().replaceAll("-", "");
+            String phone = request.getPhone().trim();
 
-            // 전화번호 형식 검증
-            if (!PHONE_PATTERN.matcher(phone).matches()) {
+            // 전화번호 형식 검증 (하이픈 포함/미포함 모두 허용)
+            String phoneWithoutHyphen = phone.replaceAll("-", "");
+            if (!PHONE_PATTERN.matcher(phoneWithoutHyphen).matches()) {
                 throw new RuntimeException("올바른 전화번호 형식이 아닙니다. (예: 010-1234-5678)");
             }
 
+            // 원본 형식 그대로 저장 (하이픈 유지)
             user.setPhone(phone);
+            logger.info("전화번호 업데이트 완료 - userId: {}", user.getUserId());
         }
 
         // ✅ 주소 업데이트 추가
@@ -229,6 +232,18 @@ public class UserUpdateService {
             } catch (DateTimeParseException e) {
                 throw new RuntimeException("생년월일 형식이 올바르지 않습니다. (YYYY-MM-DD 형식으로 입력해주세요)");
             }
+        }
+
+        // ✅ 부서 ID 업데이트 추가
+        if (request.getDepartmentId() != null) {
+            user.setDepartmentId(request.getDepartmentId());
+            logger.info("부서 ID 업데이트 완료 - userId: {}, departmentId: {}", user.getUserId(), request.getDepartmentId());
+        }
+
+        // ✅ 직급 ID 업데이트 추가
+        if (request.getPositionId() != null) {
+            user.setPositionId(request.getPositionId());
+            logger.info("직급 ID 업데이트 완료 - userId: {}, positionId: {}", user.getUserId(), request.getPositionId());
         }
     }
 

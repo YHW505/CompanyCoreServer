@@ -11,6 +11,8 @@ public class UserUpdateRequest {
     private String birthDate;
     private String currentPassword;
     private String newPassword;
+    private Integer departmentId; // ✅ 부서 ID 필드 추가
+    private Integer positionId; // ✅ 직급 ID 필드 추가
 
     @JsonProperty("isFirstLogin")
     private boolean isFirstLogin;
@@ -18,10 +20,11 @@ public class UserUpdateRequest {
     // 기본 생성자
     public UserUpdateRequest() {}
 
-    // ✅ 전체 생성자 (address 추가)
+    // ✅ 전체 생성자 (address, departmentId, positionId 추가)
     public UserUpdateRequest(Long userId, String username, String email, String phone,
                              String address, String birthDate, String currentPassword,
-                             String newPassword, boolean isFirstLogin) {
+                             String newPassword, Integer departmentId, Integer positionId, 
+                             boolean isFirstLogin) {
         this.userId = userId;
         this.username = username;
         this.email = email;
@@ -30,6 +33,8 @@ public class UserUpdateRequest {
         this.birthDate = birthDate;
         this.currentPassword = currentPassword;
         this.newPassword = newPassword;
+        this.departmentId = departmentId; // ✅ 부서 ID 초기화
+        this.positionId = positionId; // ✅ 직급 ID 초기화
         this.isFirstLogin = isFirstLogin;
     }
 
@@ -65,6 +70,16 @@ public class UserUpdateRequest {
 
     public String getNewPassword() {
         return newPassword;
+    }
+
+    // ✅ 부서 ID getter 추가
+    public Integer getDepartmentId() {
+        return departmentId;
+    }
+
+    // ✅ 직급 ID getter 추가
+    public Integer getPositionId() {
+        return positionId;
     }
 
     public boolean isFirstLogin() {
@@ -105,11 +120,21 @@ public class UserUpdateRequest {
         this.newPassword = newPassword;
     }
 
+    // ✅ 부서 ID setter 추가
+    public void setDepartmentId(Integer departmentId) {
+        this.departmentId = departmentId;
+    }
+
+    // ✅ 직급 ID setter 추가
+    public void setPositionId(Integer positionId) {
+        this.positionId = positionId;
+    }
+
     public void setFirstLogin(boolean firstLogin) {
         isFirstLogin = firstLogin;
     }
 
-    // ✅ toString 메서드에 address 추가
+    // ✅ toString 메서드에 address, departmentId, positionId 추가
     @Override
     public String toString() {
         return "UserUpdateRequest{" +
@@ -119,6 +144,8 @@ public class UserUpdateRequest {
                 ", phone='" + phone + '\'' +
                 ", address='" + address + '\'' + // ✅ 주소 추가
                 ", birthDate='" + birthDate + '\'' +
+                ", departmentId=" + departmentId + // ✅ 부서 ID 추가
+                ", positionId=" + positionId + // ✅ 직급 ID 추가
                 ", isFirstLogin=" + isFirstLogin +
                 '}';
     }
