@@ -20,6 +20,9 @@ public class AuthService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+    
+    @Autowired
+    private SessionManager sessionManager;
 
     public String login(String employeeCode, String password) {
         try {
@@ -95,6 +98,12 @@ public class AuthService {
             // 3. JWT 토큰 생성
             String token = jwtUtil.generateToken(employeeCode, user.getUserId());
             System.out.println("JWT 토큰 생성 성공");
+            
+            // 4. 중복 로그인 방지 처리
+            boolean hadExistingSession = sessionManager.handleNewLogin(user.getUserId(), token);
+            if (hadExistingSession) {
+                System.out.println("⚠️ 기존 세션이 종료되었습니다. 다른 곳에서 로그인된 사용자가 강제 로그아웃됩니다.");
+            }
 
             return token;
 
@@ -158,6 +167,55 @@ public class AuthService {
 
         } catch (Exception e) {
             System.err.println("❌ 패스워드 인코딩 실패: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * 로그아웃 처리
+     * @param token JWT 토큰
+     */
+    public void logout(String token) {
+        try {
+            sessionManager.logout(token);
+            System.out.println("로그아웃 처리 완료");
+        } catch (Exception e) {
+            System.err.println("로그아웃 처리 중 오류: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * 토큰 유효성 검증 (세션 관리 포함)
+     * @param token JWT 토큰
+     * @return 유효한 토큰인지 여부
+     */
+    public boolean validateToken(String token) {
+        try {
+            System.out.println("=== 토큰 유효성 검증 시작 ===");
+            System.out.println("토큰 길이: " + (token != null ? token.length() : 0));
+            
+            // JWT 토큰 자체의 유효성 검증
+            boolean jwtValid = jwtUtil.validateToken(token);
+            System.out.println("JWT 토큰 유효성: " + jwtValid);
+            
+            if (!jwtValid) {
+                System.out.println("JWT 토큰이 유효하지 않습니다.");
+                return false;
+            }
+            
+            // 세션 관리에서 유효한 세션인지 확인
+            boolean sessionValid = sessionManager.isValidSession(token);
+            System.out.println("세션 유효성: " + sessionValid);
+            
+            boolean result = jwtValid && sessionValid;
+            System.out.println("최종 토큰 검증 결과: " + result);
+            System.out.println("=== 토큰 유효성 검증 완료 ===");
+            
+            return result;
+        } catch (Exception e) {
+            System.err.println("토큰 검증 중 오류: " + e.getMessage());
             e.printStackTrace();
             return false;
         }

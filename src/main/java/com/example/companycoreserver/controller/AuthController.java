@@ -132,5 +132,51 @@ public class AuthController {
             return ResponseEntity.ok("❌ 테스트 중 오류: " + e.getMessage());
         }
     }
+    
+    /**
+     * 로그아웃 처리
+     * @param request 로그아웃 요청 (토큰 포함)
+     * @return 로그아웃 결과
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestBody Map<String, String> request) {
+        try {
+            String token = request.get("token");
+            if (token == null || token.isEmpty()) {
+                return ResponseEntity.badRequest().body("토큰이 필요합니다.");
+            }
+            
+            authService.logout(token);
+            return ResponseEntity.ok("로그아웃 성공");
+            
+        } catch (Exception e) {
+            System.err.println("로그아웃 처리 중 오류: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("로그아웃 처리 중 오류가 발생했습니다.");
+        }
+    }
+    
+    /**
+     * 토큰 유효성 검증
+     * @param request 토큰 검증 요청
+     * @return 토큰 유효성 결과
+     */
+    @PostMapping("/validate-token")
+    public ResponseEntity<?> validateToken(@RequestBody Map<String, String> request) {
+        try {
+            String token = request.get("token");
+            if (token == null || token.isEmpty()) {
+                return ResponseEntity.badRequest().body("토큰이 필요합니다.");
+            }
+            
+            boolean isValid = authService.validateToken(token);
+            return ResponseEntity.ok(Map.of("valid", isValid));
+            
+        } catch (Exception e) {
+            System.err.println("토큰 검증 중 오류: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("토큰 검증 중 오류가 발생했습니다.");
+        }
+    }
 
 }

@@ -40,3 +40,4 @@ application.yaml
 
 ### VS Code ###
 .vscode/
+/src/main/java/com/example
