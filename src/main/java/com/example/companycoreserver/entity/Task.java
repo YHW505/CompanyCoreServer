@@ -17,7 +17,7 @@ public class Task {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "task_id")
-    private Integer taskId;
+    private Long taskId;
 
     // 🔄 기존 assignedBy는 createdBy로 변경 (업무 생성자)
     @Column(name = "created_by")
@@ -118,8 +118,8 @@ public class Task {
     }
 
     // Getter/Setter
-    public Integer getTaskId() { return taskId; }
-    public void setTaskId(Integer taskId) { this.taskId = taskId; }
+    public Long getTaskId() { return taskId; }
+    public void setTaskId(Long taskId) { this.taskId = taskId; }
 
     // 🔄 assignedBy → createdBy로 변경
     public Long getCreatedBy() { return createdBy; }
