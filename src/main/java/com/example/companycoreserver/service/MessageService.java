@@ -24,42 +24,125 @@ public class MessageService {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
 
-    // ✅ 1. 메시지 전송
-    public MessageResponse sendMessage(Long senderId, MessageRequest request) {
+    /**
+     * ✅ 메시지 전송 (첨부파일 포함 가능)
+     */
+    @Transactional
+    public MessageResponse createMessage(Long senderId, MessageRequest requestDto) {
+        System.out.println("메시지 전송 요청: 제목=" + requestDto.getTitle() + ", 발신자 ID=" + senderId);
+
         // 수신자 조회
-        User receiver = userRepository.findByEmail(request.getReceiverEmail())
-                .orElseThrow(() -> new RuntimeException("수신자를 찾을 수 없습니다: " + request.getReceiverEmail()));
+        User receiver = userRepository.findByEmail(requestDto.getReceiverEmail())
+                .orElseThrow(() -> new RuntimeException("수신자를 찾을 수 없습니다: " + requestDto.getReceiverEmail()));
 
         // 발신자 조회
         User sender = userRepository.findById(senderId)
                 .orElseThrow(() -> new RuntimeException("발신자를 찾을 수 없습니다: " + senderId));
 
         // 메시지 생성
-        Message message;
-        if (request.hasAttachment()) {
-            message = new Message(
-                    senderId,
-                    receiver.getUserId(),
-                    request.getMessageType(),
-                    request.getTitle(),
-                    request.getContent(),
-                    request.getAttachmentContentType(),
-                    request.getAttachmentSize(),
-                    request.getAttachmentContent(),
-                    request.getAttachmentFileName()
-            );
-        } else {
-            message = new Message(
-                    senderId,
-                    receiver.getUserId(),
-                    request.getMessageType(),
-                    request.getTitle(),
-                    request.getContent()
-            );
+        Message message = new Message(
+                senderId,
+                receiver.getUserId(),
+                requestDto.getMessageType(),
+                requestDto.getTitle(),
+                requestDto.getContent()
+        );
+
+        // 🆕 첨부파일 내용 처리 (Base64 디코딩)
+        if (requestDto.getAttachmentContent() != null && !requestDto.getAttachmentContent().trim().isEmpty()) {
+            try {
+                // Base64 디코딩
+                byte[] fileData = java.util.Base64.getDecoder().decode(requestDto.getAttachmentContent());
+
+                // 첨부파일 정보 설정
+                message.setAttachmentFilename(requestDto.getAttachmentFileName());
+                message.setAttachmentContentType(requestDto.getAttachmentContentType());
+                message.setAttachmentContent(requestDto.getAttachmentContent()); // Base64 문자열
+                message.setAttachmentSize((long) fileData.length);
+
+                System.out.println("첨부파일 처리 완료: " + requestDto.getAttachmentFileName() + " (" + fileData.length + " bytes) - Base64 내용 생략");
+            } catch (Exception e) {
+                System.err.println("첨부파일 Base64 디코딩 실패: " + e.getMessage());
+                // 첨부파일 처리 실패 시 기본 정보만 저장
+            }
         }
 
         Message savedMessage = messageRepository.save(message);
 
+        System.out.println("메시지 전송 완료: ID=" + savedMessage.getMessageId());
+        return convertToMessageResponse(savedMessage, sender, receiver);
+    }
+
+    /**
+     * 🔧 첨부파일 업로드 전용 메서드 (4개 파라미터 사용)
+     */
+    @Transactional
+    public MessageResponse uploadAttachment(Integer messageId, String filename,
+                                            String contentType, byte[] fileData, Long userId) {
+        System.out.println("첨부파일 업로드 요청: 메시지 ID=" + messageId + ", 파일명=" + filename);
+
+        Message message = messageRepository.findByMessageId(messageId)
+                .orElseThrow(() -> new RuntimeException("해당 메시지를 찾을 수 없습니다. ID: " + messageId));
+
+        // 권한 체크 (발신자만 첨부파일 추가 가능)
+        if (!message.getSenderId().equals(userId)) {
+            throw new RuntimeException("첨부파일 업로드 권한이 없습니다.");
+        }
+
+        // ✅ 파일 크기는 바이너리 데이터에서 자동 계산
+        Long calculatedSize = (fileData != null) ? (long) fileData.length : 0L;
+
+        // 🔧 Base64 인코딩하여 저장
+        String base64Content = java.util.Base64.getEncoder().encodeToString(fileData);
+
+        // 첨부파일 정보 업데이트
+        message.setAttachmentFilename(filename);
+        message.setAttachmentContentType(contentType);
+        message.setAttachmentContent(base64Content);
+        message.setAttachmentSize(calculatedSize);
+
+        Message savedMessage = messageRepository.save(message);
+
+        // 발신자, 수신자 정보 조회
+        User sender = userRepository.findById(message.getSenderId())
+                .orElseThrow(() -> new RuntimeException("발신자 정보를 찾을 수 없습니다."));
+        User receiver = userRepository.findById(message.getReceiverId())
+                .orElseThrow(() -> new RuntimeException("수신자 정보를 찾을 수 없습니다."));
+
+        System.out.println("첨부파일 업로드 완료: " + filename + " (크기: " + calculatedSize + " bytes)");
+        return convertToMessageResponse(savedMessage, sender, receiver);
+    }
+
+    /**
+     * 🆕 첨부파일 제거
+     */
+    @Transactional
+    public MessageResponse removeAttachment(Integer messageId, Long userId) {
+        System.out.println("첨부파일 제거 요청: 메시지 ID=" + messageId);
+
+        Message message = messageRepository.findByMessageId(messageId)
+                .orElseThrow(() -> new RuntimeException("해당 메시지를 찾을 수 없습니다. ID: " + messageId));
+
+        // 권한 체크 (발신자만 첨부파일 제거 가능)
+        if (!message.getSenderId().equals(userId)) {
+            throw new RuntimeException("첨부파일 제거 권한이 없습니다.");
+        }
+
+        // 첨부파일 정보 제거
+        message.setAttachmentFilename(null);
+        message.setAttachmentContentType(null);
+        message.setAttachmentContent(null);
+        message.setAttachmentSize(null);
+
+        Message savedMessage = messageRepository.save(message);
+
+        // 발신자, 수신자 정보 조회
+        User sender = userRepository.findById(message.getSenderId())
+                .orElseThrow(() -> new RuntimeException("발신자 정보를 찾을 수 없습니다."));
+        User receiver = userRepository.findById(message.getReceiverId())
+                .orElseThrow(() -> new RuntimeException("수신자 정보를 찾을 수 없습니다."));
+
+        System.out.println("첨부파일 제거 완료");
         return convertToMessageResponse(savedMessage, sender, receiver);
     }
 

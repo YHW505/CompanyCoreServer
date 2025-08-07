@@ -5,9 +5,13 @@ import com.example.companycoreserver.dto.MessageResponse;
 import com.example.companycoreserver.dto.MessageSummaryResponse;
 import com.example.companycoreserver.service.MessageService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,29 +23,33 @@ public class MessageController {
 
     private final MessageService messageService;
 
-    // ✅ 1. 메시지 전송
     @PostMapping
     public ResponseEntity<Map<String, Object>> sendMessage(
-            @RequestBody MessageRequest request,
-            @RequestHeader("User-Id") Long userId) {
-
-        Map<String, Object> response = new HashMap<>();
-
+            @RequestHeader("User-Id") Long userId,
+            @RequestBody MessageRequest requestDto) {
         try {
-            MessageResponse message = messageService.sendMessage(userId, request);
+            System.out.println("메시지 전송 API 호출: " + requestDto.getTitle());
 
-            response.put("success", true);
-            response.put("data", message);
-            response.put("message", "메시지가 성공적으로 전송되었습니다.");
+            MessageResponse response = messageService.createMessage(userId, requestDto);
 
-            return ResponseEntity.ok(response);
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "메시지가 성공적으로 전송되었습니다.");
+            result.put("data", response);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(result);
 
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "메시지 전송 실패: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            System.err.println("메시지 전송 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "메시지 전송에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResult);
         }
     }
+
 
     // ✅ 2. 메시지 조회 (통합)
     @GetMapping
@@ -176,6 +184,8 @@ public class MessageController {
         }
     }
 
+
+
     // ✅ 7. 사용자 간 대화 조회
     @GetMapping("/conversation/{otherUserId}")
     public ResponseEntity<Map<String, Object>> getConversation(
@@ -245,26 +255,144 @@ public class MessageController {
         }
     }
 
-    // ✅ 10. 첨부파일 다운로드 (Base64 반환)
-    @GetMapping("/{messageId}/attachment")
-    public ResponseEntity<Map<String, Object>> downloadAttachment(
+    /**
+     * ✅ 첨부파일 업로드 (기존 메시지에 첨부파일 추가) - Base64 방식
+     * POST /api/messages/{messageId}/attachment
+     */
+    @PostMapping("/{messageId}/attachment")
+    public ResponseEntity<Map<String, Object>> uploadAttachment(
             @PathVariable Integer messageId,
-            @RequestHeader("User-Id") Long userId) {
-
-        Map<String, Object> response = new HashMap<>();
-
+            @RequestHeader("User-Id") Long userId,
+            @RequestBody Map<String, Object> attachmentData) {
         try {
-            Map<String, Object> attachment = messageService.downloadAttachment(messageId, userId);
+            System.out.println("첨부파일 업로드 API 호출: 메시지 ID=" + messageId);
 
-            response.put("success", true);
-            response.put("data", attachment);
+            // 필수 데이터 추출
+            String filename = (String) attachmentData.get("filename");
+            String contentType = (String) attachmentData.get("contentType");
+            String base64Content = (String) attachmentData.get("fileData");
 
-            return ResponseEntity.ok(response);
+            // 데이터 검증
+            if (filename == null || filename.trim().isEmpty()) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "파일명이 필요합니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResult);
+            }
+
+            if (base64Content == null || base64Content.trim().isEmpty()) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "파일 데이터가 없습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResult);
+            }
+
+            // Base64 디코딩하여 파일 크기 확인
+            byte[] fileData = java.util.Base64.getDecoder().decode(base64Content);
+
+            // 파일 크기 제한 (예: 10MB)
+            long maxFileSize = 10 * 1024 * 1024; // 10MB
+            if (fileData.length > maxFileSize) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "파일 크기가 너무 큽니다. (최대 10MB)");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResult);
+            }
+
+            // 서비스 호출
+            MessageResponse response = messageService.uploadAttachment(
+                    messageId,
+                    filename,
+                    contentType,
+                    fileData,
+                    userId
+            );
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "첨부파일이 성공적으로 업로드되었습니다.");
+            result.put("data", response);
+
+            return ResponseEntity.ok(result);
 
         } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", "첨부파일 다운로드 실패: " + e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            System.err.println("첨부파일 업로드 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "첨부파일 업로드에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResult);
         }
     }
+
+
+    /**
+     * ✅ 첨부파일 제거
+     * DELETE /api/messages/{messageId}/attachment
+     */
+    @DeleteMapping("/{messageId}/attachment")
+    public ResponseEntity<Map<String, Object>> removeAttachment(
+            @PathVariable Integer messageId,
+            @RequestHeader("User-Id") Long userId) {
+        try {
+            System.out.println("첨부파일 제거 API 호출: 메시지 ID=" + messageId);
+
+            MessageResponse response = messageService.removeAttachment(messageId, userId);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "첨부파일이 성공적으로 제거되었습니다.");
+            result.put("data", response);
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("첨부파일 제거 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "첨부파일 제거에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResult);
+        }
+    }
+
+    /**
+     * ✅ 첨부파일 다운로드
+     * GET /api/messages/{messageId}/attachment/download
+     */
+    @GetMapping("/{messageId}/attachment/download")
+    public ResponseEntity<?> downloadAttachment(
+            @PathVariable Integer messageId,
+            @RequestHeader("User-Id") Long userId) {
+        try {
+            System.out.println("첨부파일 다운로드 API 호출: 메시지 ID=" + messageId);
+
+            Map<String, Object> attachment = messageService.downloadAttachment(messageId, userId);
+
+            // Base64 디코딩
+            String base64Data = (String) attachment.get("fileData");
+            byte[] fileData = java.util.Base64.getDecoder().decode(base64Data);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.parseMediaType((String) attachment.get("contentType")));
+            headers.setContentDispositionFormData("attachment", (String) attachment.get("filename"));
+            headers.setContentLength(fileData.length);
+
+            return ResponseEntity.ok()
+                    .headers(headers)
+                    .body(fileData);
+
+        } catch (Exception e) {
+            System.err.println("첨부파일 다운로드 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "첨부파일 다운로드에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResult);
+        }
+    }
+
 }

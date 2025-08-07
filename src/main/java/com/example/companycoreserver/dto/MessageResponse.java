@@ -1,4 +1,6 @@
 package com.example.companycoreserver.dto;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 
 public class MessageResponse {
@@ -8,13 +10,22 @@ public class MessageResponse {
     private String messageType;
     private String title;
     private String content;
+
+    // ✅ JSON 직렬화 시 "read" 필드로 출력되도록 명시적 지정
+    @JsonProperty("read")
     private boolean isRead;
+
     private LocalDateTime sentAt;
 
-    // 🆕 첨부파일 관련 필드 추가 (content는 제외)
+    // ✅ JSON 직렬화 시 "hasAttachment" 필드로 출력되도록 명시적 지정
+    @JsonProperty("hasAttachment")
     private boolean hasAttachment;
+
     private String attachmentContentType;
     private Long attachmentSize;
+
+    // ✅ JSON 직렬화 시 "attachmentFileName" 필드로 출력되도록 명시적 지정
+    @JsonProperty("attachmentFileName")
     private String attachmentFileName;
 
     // 발신자 정보
@@ -66,7 +77,7 @@ public class MessageResponse {
         this.receiverEmail = receiverEmail;
     }
 
-    // 기존 Getter & Setter들...
+    // Getter & Setter들
     public Integer getMessageId() {
         return messageId;
     }
@@ -115,6 +126,7 @@ public class MessageResponse {
         this.content = content;
     }
 
+    // ✅ isRead getter/setter - @JsonProperty로 "read" 필드 매핑
     public boolean isRead() {
         return isRead;
     }
@@ -131,7 +143,7 @@ public class MessageResponse {
         this.sentAt = sentAt;
     }
 
-    // 🆕 첨부파일 관련 Getter & Setter
+    // ✅ hasAttachment getter/setter - @JsonProperty로 "hasAttachment" 필드 매핑
     public boolean isHasAttachment() {
         return hasAttachment;
     }
@@ -164,7 +176,7 @@ public class MessageResponse {
         this.attachmentFileName = attachmentFileName;
     }
 
-    // 기존 사용자 정보 Getter & Setter들... (생략)
+    // 사용자 정보 Getter & Setter들
     public String getSenderName() {
         return senderName;
     }
