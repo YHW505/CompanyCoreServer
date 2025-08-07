@@ -22,24 +22,47 @@ public class UserService {
     private PasswordEncoder passwordEncoder;
 
     public User createUser(User user) {
-        // 비밀번호 암호화 (나중에 BCrypt 적용)
-         user.setPassword(passwordEncoder.encode(user.getPassword()));
+        try {
+            System.out.println("=== UserService.createUser 시작 ===");
+            System.out.println("입력받은 사용자: " + user);
+            
+            // userId는 자동 생성되므로 null로 설정
+            user.setUserId(null);
+            
+            // 비밀번호 암호화 (나중에 BCrypt 적용)
+            if (user.getPassword() != null && !user.getPassword().trim().isEmpty()) {
+                user.setPassword(passwordEncoder.encode(user.getPassword()));
+            } else {
+                user.setPassword(passwordEncoder.encode("1234")); // 기본 비밀번호
+            }
 
-        // 기본값 설정
-        if (user.getIsActive() == null) {
-            user.setIsActive(1);
-        }
-        if(user.getIsFirstLogin() == null) {
-            user.setIsFirstLogin(1);
-        }
-        if (user.getRole() == null) {
-            user.setRole(Role.EMPLOYEE);
-        }
-        if (user.getJoinDate() == null) {
-            user.setJoinDate(LocalDate.now());
-        }
+            // 기본값 설정
+            if (user.getIsActive() == null) {
+                user.setIsActive(1);
+            }
+            if(user.getIsFirstLogin() == null) {
+                user.setIsFirstLogin(1);
+            }
+            if (user.getRole() == null) {
+                user.setRole(Role.EMPLOYEE);
+            }
+            if (user.getJoinDate() == null) {
+                user.setJoinDate(LocalDate.now());
+            }
+            
+            // createdAt은 자동 생성되므로 null로 설정
+            user.setCreatedAt(null);
 
-        return userRepository.save(user);
+            System.out.println("저장할 사용자 정보: " + user);
+            User savedUser = userRepository.save(user);
+            System.out.println("사용자 저장 성공: " + savedUser.getUserId());
+            return savedUser;
+            
+        } catch (Exception e) {
+            System.err.println("UserService.createUser 오류: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
     // 모든 사용자 조회
     public List<User> getAllUsers() {
