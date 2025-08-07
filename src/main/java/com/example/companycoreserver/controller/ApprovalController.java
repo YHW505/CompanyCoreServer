@@ -297,7 +297,7 @@ public class ApprovalController {
     }
 
 
-    // ✅ 결재 승인 - DTO 변환
+    // ✅ 결재 승인 - DTO 변환 (부서별 권한 검증 추가)
     @PostMapping("/approve/{approvalId}")
     public ResponseEntity<?> approveRequest(@PathVariable Long approvalId, @RequestBody Map<String, Object> request) {
         try {
@@ -307,6 +307,14 @@ public class ApprovalController {
             }
 
             Long approverId = Long.valueOf(approverIdObj.toString());
+            
+            // ✅ 부서별 권한 검증 추가
+            boolean hasPermission = approvalService.validateDepartmentPermission(approvalId, approverId);
+            if (!hasPermission) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("본인 부서의 결재만 승인할 수 있습니다.");
+            }
+            
             Approval approval = approvalService.approveRequest(approvalId, approverId);
 
             // Entity → DTO 변환
@@ -321,7 +329,7 @@ public class ApprovalController {
         }
     }
 
-    // ✅ 결재 거부 - DTO 변환
+    // ✅ 결재 거부 - DTO 변환 (부서별 권한 검증 추가)
     @PostMapping("/reject/{approvalId}")
     public ResponseEntity<?> rejectRequest(@PathVariable Long approvalId, @RequestBody Map<String, Object> request) {
         try {
@@ -332,6 +340,13 @@ public class ApprovalController {
 
             Long approverId = Long.valueOf(approverIdObj.toString());
             String rejectionReason = (String) request.get("rejectionReason");
+
+            // ✅ 부서별 권한 검증 추가
+            boolean hasPermission = approvalService.validateDepartmentPermission(approvalId, approverId);
+            if (!hasPermission) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body("본인 부서의 결재만 거부할 수 있습니다.");
+            }
 
             Approval approval = approvalService.rejectRequest(approvalId, approverId, rejectionReason);
 

@@ -374,4 +374,41 @@ public class ApprovalService {
         
         return response;
     }
+
+    // ✅ 부서별 권한 검증 메서드
+    public boolean validateDepartmentPermission(Long approvalId, Long approverId) {
+        try {
+            // 결재 정보 조회
+            Approval approval = approvalRepository.findById(approvalId)
+                    .orElseThrow(() -> new RuntimeException("결재 요청을 찾을 수 없습니다."));
+            
+            // 승인자 정보 조회
+            User approver = userRepository.findById(approverId)
+                    .orElseThrow(() -> new RuntimeException("승인자를 찾을 수 없습니다."));
+            
+            // 요청자 정보 조회
+            User requester = approval.getRequester();
+            
+            // 부서 정보 확인
+            if (requester.getDepartment() == null || approver.getDepartment() == null) {
+                System.err.println("부서 정보가 없습니다. 요청자: " + requester.getUsername() + 
+                                 ", 승인자: " + approver.getUsername());
+                return false;
+            }
+            
+            // 같은 부서인지 확인
+            boolean sameDepartment = requester.getDepartment().getDepartmentId()
+                    .equals(approver.getDepartment().getDepartmentId());
+            
+            System.out.println("부서 권한 검증 - 요청자 부서: " + requester.getDepartment().getDepartmentName() + 
+                             ", 승인자 부서: " + approver.getDepartment().getDepartmentName() + 
+                             ", 권한: " + (sameDepartment ? "허용" : "거부"));
+            
+            return sameDepartment;
+            
+        } catch (Exception e) {
+            System.err.println("부서 권한 검증 중 오류: " + e.getMessage());
+            return false;
+        }
+    }
 }
