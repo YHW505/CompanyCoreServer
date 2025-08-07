@@ -126,6 +126,25 @@ public class ApprovalService {
         return response;
     }
 
+    public Map<String, Object> getPendingApprovalsByDepartmentWithPagination(String department, int page, int size, String sortBy, String sortDir) {
+        Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        // ✅ 부서 + PENDING 상태로 필터링
+        Page<Approval> approvalPage = approvalRepository.findByRequesterDepartmentAndStatus(department, ApprovalStatus.PENDING, pageable);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("content", approvalPage.getContent());
+        response.put("totalElements", approvalPage.getTotalElements());
+        response.put("totalPages", approvalPage.getTotalPages());
+        response.put("currentPage", page);
+        response.put("size", size);
+        response.put("department", department);
+        response.put("status", "PENDING"); // ✅ 상태 정보 추가
+
+        return response;
+    }
+
     // 🔄 결재 요청 생성 - 첨부파일 포함 (approverId null 허용)
     public Approval createApproval(String title, String content, Long requesterId,
                                    String attachmentFilename, String attachmentContentType, Long attachmentSize,
