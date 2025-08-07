@@ -4,18 +4,12 @@ import com.example.companycoreserver.entity.Enum.MessageType;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
-import java.awt.*;
-
 import java.time.LocalDateTime;
-
-import com.example.companycoreserver.entity.Enum.MessageType;
-
 
 @Entity
 @Table(name = "messages")
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Message {
-
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,6 +38,19 @@ public class Message {
     @Column(name = "sent_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime sentAt;
 
+    // 🆕 첨부파일 관련 필드들 추가
+    @Column(name = "attachment_content_type", length = 100)
+    private String attachmentContentType;
+
+    @Column(name = "attachment_size")
+    private Long attachmentSize;
+
+    @Column(name = "attachment_content", columnDefinition = "TEXT")
+    private String attachmentContent;
+
+    @Column(name = "attachment_filename", length = 255)
+    private String attachmentFilename;
+
     // 🔗 관계 매핑
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id", insertable = false, updatable = false)
@@ -57,7 +64,7 @@ public class Message {
     public Message() {
     }
 
-    // 생성자
+    // 생성자 (기존)
     public Message(Long senderId, Long receiverId, MessageType messageType,
                    String title, String content) {
         this.senderId = senderId;
@@ -67,7 +74,22 @@ public class Message {
         this.content = content;
     }
 
-    // Getter/Setter
+    // 🆕 첨부파일 포함 생성자
+    public Message(Long senderId, Long receiverId, MessageType messageType,
+                   String title, String content, String attachmentContentType,
+                   Long attachmentSize, String attachmentContent, String attachmentFilename) {
+        this.senderId = senderId;
+        this.receiverId = receiverId;
+        this.messageType = messageType;
+        this.title = title;
+        this.content = content;
+        this.attachmentContentType = attachmentContentType;
+        this.attachmentSize = attachmentSize;
+        this.attachmentContent = attachmentContent;
+        this.attachmentFilename = attachmentFilename;
+    }
+
+    // 기존 Getter/Setter들...
     public Integer getMessageId() {
         return messageId;
     }
@@ -132,6 +154,40 @@ public class Message {
         this.sentAt = sentAt;
     }
 
+    // 🆕 첨부파일 관련 Getter/Setter들
+    public String getAttachmentContentType() {
+        return attachmentContentType;
+    }
+
+    public void setAttachmentContentType(String attachmentContentType) {
+        this.attachmentContentType = attachmentContentType;
+    }
+
+    public Long getAttachmentSize() {
+        return attachmentSize;
+    }
+
+    public void setAttachmentSize(Long attachmentSize) {
+        this.attachmentSize = attachmentSize;
+    }
+
+    public String getAttachmentContent() {
+        return attachmentContent;
+    }
+
+    public void setAttachmentContent(String attachmentContent) {
+        this.attachmentContent = attachmentContent;
+    }
+
+    public String getAttachmentFilename() {
+        return attachmentFilename;
+    }
+
+    public void setAttachmentFilename(String attachmentFilename) {
+        this.attachmentFilename = attachmentFilename;
+    }
+
+
     public User getSender() {
         return sender;
     }
@@ -146,6 +202,18 @@ public class Message {
 
     public void setReceiver(User receiver) {
         this.receiver = receiver;
+    }
+
+    // 🆕 첨부파일 존재 여부 확인 헬퍼 메소드
+    public boolean hasAttachment() {
+        return attachmentContent != null && !attachmentContent.trim().isEmpty();
+    }
+
+    // 🆕 첨부파일 정보 초기화 헬퍼 메소드
+    public void clearAttachment() {
+        this.attachmentContentType = null;
+        this.attachmentSize = null;
+        this.attachmentContent = null;
     }
 
     @PrePersist
@@ -164,6 +232,8 @@ public class Message {
                 ", content='" + content + '\'' +
                 ", isRead=" + isRead +
                 ", sentAt=" + sentAt +
+                ", hasAttachment=" + hasAttachment() +
+                ", attachmentSize=" + attachmentSize +
                 '}';
     }
 }

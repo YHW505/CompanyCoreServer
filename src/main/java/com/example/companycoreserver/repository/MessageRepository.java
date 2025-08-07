@@ -7,9 +7,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface MessageRepository extends JpaRepository<Message, Long> {
+
+    // ✅ 메시지 ID로 조회 (추가!!)
+    Optional<Message> findByMessageId(Integer messageId);
 
     // ✅ 수신자별 메시지 조회 (최신순)
     List<Message> findByReceiverIdOrderBySentAtDesc(Long receiverId);

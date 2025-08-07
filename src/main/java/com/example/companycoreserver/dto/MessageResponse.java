@@ -11,6 +11,12 @@ public class MessageResponse {
     private boolean isRead;
     private LocalDateTime sentAt;
 
+    // 🆕 첨부파일 관련 필드 추가 (content는 제외)
+    private boolean hasAttachment;
+    private String attachmentContentType;
+    private Long attachmentSize;
+    private String attachmentFileName;
+
     // 발신자 정보
     private String senderName;
     private String senderEmployeeCode;
@@ -28,9 +34,10 @@ public class MessageResponse {
     // 기본 생성자
     public MessageResponse() {}
 
-    // 전체 생성자
+    // 전체 생성자 (첨부파일 정보 포함)
     public MessageResponse(Integer messageId, Long senderId, Long receiverId, String messageType,
                            String title, String content, boolean isRead, LocalDateTime sentAt,
+                           boolean hasAttachment, String attachmentContentType, Long attachmentSize, String attachmentFileName,
                            String senderName, String senderEmployeeCode, String senderPositionName,
                            String senderDepartmentName, String senderEmail,
                            String receiverName, String receiverEmployeeCode, String receiverPositionName,
@@ -43,6 +50,10 @@ public class MessageResponse {
         this.content = content;
         this.isRead = isRead;
         this.sentAt = sentAt;
+        this.hasAttachment = hasAttachment;
+        this.attachmentContentType = attachmentContentType;
+        this.attachmentSize = attachmentSize;
+        this.attachmentFileName = attachmentFileName;
         this.senderName = senderName;
         this.senderEmployeeCode = senderEmployeeCode;
         this.senderPositionName = senderPositionName;
@@ -55,7 +66,7 @@ public class MessageResponse {
         this.receiverEmail = receiverEmail;
     }
 
-    // Getter & Setter
+    // 기존 Getter & Setter들...
     public Integer getMessageId() {
         return messageId;
     }
@@ -120,6 +131,40 @@ public class MessageResponse {
         this.sentAt = sentAt;
     }
 
+    // 🆕 첨부파일 관련 Getter & Setter
+    public boolean isHasAttachment() {
+        return hasAttachment;
+    }
+
+    public void setHasAttachment(boolean hasAttachment) {
+        this.hasAttachment = hasAttachment;
+    }
+
+    public String getAttachmentContentType() {
+        return attachmentContentType;
+    }
+
+    public void setAttachmentContentType(String attachmentContentType) {
+        this.attachmentContentType = attachmentContentType;
+    }
+
+    public Long getAttachmentSize() {
+        return attachmentSize;
+    }
+
+    public void setAttachmentSize(Long attachmentSize) {
+        this.attachmentSize = attachmentSize;
+    }
+
+    public String getAttachmentFileName() {
+        return attachmentFileName;
+    }
+
+    public void setAttachmentFileName(String attachmentFileName) {
+        this.attachmentFileName = attachmentFileName;
+    }
+
+    // 기존 사용자 정보 Getter & Setter들... (생략)
     public String getSenderName() {
         return senderName;
     }

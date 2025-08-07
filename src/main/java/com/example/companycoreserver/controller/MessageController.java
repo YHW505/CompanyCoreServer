@@ -3,13 +3,13 @@ package com.example.companycoreserver.controller;
 import com.example.companycoreserver.dto.MessageRequest;
 import com.example.companycoreserver.dto.MessageResponse;
 import com.example.companycoreserver.dto.MessageSummaryResponse;
-import com.example.companycoreserver.entity.Enum.MessageType;
 import com.example.companycoreserver.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -22,137 +22,216 @@ public class MessageController {
     private MessageService messageService;
 
     // ✅ 1. 메시지 전송
-    @PostMapping
-    public ResponseEntity<?> sendMessage(@RequestBody MessageRequest request,
-                                         @RequestHeader("User-Id") Long senderId) {
+    @PostMapping("/send")
+    public ResponseEntity<Map<String, Object>> sendMessage(
+            @RequestBody MessageRequest request,
+            @RequestHeader("User-Id") Long userId) {
+
+        Map<String, Object> response = new HashMap<>();
+
         try {
-            // 🔥 이 부분이 핵심 변경사항
-            MessageResponse response = messageService.sendMessage(request, senderId);
+            MessageResponse messageResponse = messageService.sendMessage(request, userId);
+
+            response.put("success", true);
+            response.put("message", "메시지가 성공적으로 전송되었습니다");
+            response.put("data", messageResponse);
+
             return ResponseEntity.ok(response);
+
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "메시지 전송 실패", "message", e.getMessage()
-            ));
+            response.put("success", false);
+            response.put("message", "메시지 전송 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
-    // ✅ 2. 메시지 조회 (통합)
+    // ✅ 2. 메시지 목록 조회
     @GetMapping
-    public ResponseEntity<List<MessageSummaryResponse>> getMessages(
-            @RequestHeader("User-Id") Long userId,
+    public ResponseEntity<Map<String, Object>> getMessages(
             @RequestParam(defaultValue = "received") String type,
-            @RequestParam(required = false) String messageType,
             @RequestParam(required = false) String keyword,
-            @RequestParam(defaultValue = "false") boolean unreadOnly) {
+            @RequestParam(defaultValue = "false") boolean unreadOnly,
+            @RequestHeader("User-Id") Long userId) {
 
-        List<MessageSummaryResponse> messages = messageService.getMessages(
-                userId, type, messageType, keyword, unreadOnly);
-        return ResponseEntity.ok(messages);
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            List<MessageSummaryResponse> messages = messageService.getMessages(userId, type, keyword, unreadOnly);
+
+            response.put("success", true);
+            response.put("data", messages);
+            response.put("total", messages.size());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "메시지 조회 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 
     // ✅ 3. 메시지 상세 조회
     @GetMapping("/{id}")
-    public ResponseEntity<?> getMessageById(@PathVariable Long id) {
+    public ResponseEntity<Map<String, Object>> getMessageById(
+            @PathVariable Integer id,
+            @RequestHeader("User-Id") Long userId) {
+
+        Map<String, Object> response = new HashMap<>();
+
         try {
             MessageResponse message = messageService.getMessageById(id);
-            return ResponseEntity.ok(message);
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
 
-    // ✅ 4. 메시지 상태 변경 (읽음/삭제)
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateMessage(@PathVariable Long id,
-                                           @RequestBody Map<String, String> request,
-                                           @RequestHeader("User-Id") Long userId) {
-        try {
-            String action = request.get("action");
-            if ("read".equals(action)) {
-                MessageResponse message = messageService.markAsRead(id, userId);
-                return ResponseEntity.ok(message);
-            } else if ("delete".equals(action)) {
-                messageService.deleteMessage(id, userId);
-                return ResponseEntity.ok(Map.of("success", true, "message", "메시지가 삭제되었습니다."));
-            } else {
-                return ResponseEntity.badRequest().body(Map.of("error", "잘못된 액션"));
+            // 권한 확인
+            if (!message.getSenderId().equals(userId) && !message.getReceiverId().equals(userId)) {
+                response.put("success", false);
+                response.put("message", "메시지를 조회할 권한이 없습니다");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
+
+            response.put("success", true);
+            response.put("data", message);
+
+            return ResponseEntity.ok(response);
+
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            response.put("success", false);
+            response.put("message", "메시지 조회 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
-    // 메시지/email 삭제
+    // ✅ 4. 메시지 읽음 처리
+    @PutMapping("/{id}/read")
+    public ResponseEntity<Map<String, Object>> markAsRead(
+            @PathVariable Integer id,
+            @RequestHeader("User-Id") Long userId) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            MessageResponse message = messageService.markAsRead(id, userId);
+
+            response.put("success", true);
+            response.put("message", "메시지를 읽음으로 처리했습니다");
+            response.put("data", message);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "읽음 처리 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    // ✅ 5. 메시지 삭제
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteMessage(@PathVariable Long id,
-                                           @RequestHeader("User-Id") Long userId) {
+    public ResponseEntity<Map<String, Object>> deleteMessage(
+            @PathVariable Integer id,
+            @RequestHeader("User-Id") Long userId) {
+
+        Map<String, Object> response = new HashMap<>();
+
         try {
             messageService.deleteMessage(id, userId);
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "메시지가 삭제되었습니다.",
-                    "deletedId", id
-            ));
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+
+            response.put("success", true);
+            response.put("message", "메시지가 삭제되었습니다");
+
+            return ResponseEntity.ok(response);
+
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(Map.of(
-                    "error", "서버 오류가 발생했습니다."
-            ));
+            response.put("success", false);
+            response.put("message", "메시지 삭제 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
-    // ✅ 5. 메시지 일괄 처리
-    @PutMapping("/bulk")
-    public ResponseEntity<?> bulkUpdateMessages(@RequestBody Map<String, Object> request,
-                                                @RequestHeader("User-Id") Long userId) {
-        try {
-            @SuppressWarnings("unchecked")
-            List<Long> messageIds = (List<Long>) request.get("messageIds");
-            String action = request.get("action").toString();
-
-            int successCount = messageService.bulkUpdateMessages(messageIds, action, userId);
-
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "processedCount", successCount,
-                    "totalCount", messageIds.size()
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-
-    // ✅ 6. 메시지 답장
-    @PostMapping("/{id}/reply")
-    public ResponseEntity<?> replyMessage(@PathVariable Long id,
-                                          @RequestBody Map<String, String> request,
-                                          @RequestHeader("User-Id") Long senderId) {
-        try {
-            String title = request.get("title");
-            String content = request.get("content");
-
-            MessageResponse replyMessage = messageService.replyMessage(id, senderId, title, content);
-            return ResponseEntity.ok(replyMessage);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-
-    // ✅ 7. 사용자 간 대화 조회
-    @GetMapping("/conversation/{otherUserId}")
-    public ResponseEntity<List<MessageSummaryResponse>> getConversation(
-            @PathVariable Long otherUserId,
+    // ✅ 6. 첨부파일 다운로드
+    @GetMapping("/{id}/attachment")
+    public ResponseEntity<Map<String, Object>> downloadAttachment(
+            @PathVariable Integer id,
             @RequestHeader("User-Id") Long userId) {
-        List<MessageSummaryResponse> conversation = messageService.getConversation(userId, otherUserId);
-        return ResponseEntity.ok(conversation);
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            MessageResponse message = messageService.getMessageById(id);
+
+            if (!message.getSenderId().equals(userId) && !message.getReceiverId().equals(userId)) {
+                response.put("success", false);
+                response.put("message", "첨부파일을 다운로드할 권한이 없습니다");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            if (!message.isHasAttachment()) {
+                response.put("success", false);
+                response.put("message", "첨부파일이 없습니다");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            String base64Content = messageService.downloadAttachment(id, userId);
+
+            Map<String, Object> attachmentData = new HashMap<>();
+            attachmentData.put("filename", message.getAttachmentFileName());
+            attachmentData.put("contentType", message.getAttachmentContentType());
+            attachmentData.put("content", base64Content);
+            attachmentData.put("size", message.getAttachmentSize());
+
+            response.put("success", true);
+            response.put("data", attachmentData);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "첨부파일 다운로드 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 
-    // ✅ 8. 메시지 대시보드 (통합 통계)
+    // ✅ 7. 읽지 않은 메시지 개수
+    @GetMapping("/unread/count")
+    public ResponseEntity<Map<String, Object>> getUnreadCount(
+            @RequestHeader("User-Id") Long userId) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            Long unreadCount = messageService.getUnreadCount(userId);
+
+            response.put("success", true);
+            response.put("unreadCount", unreadCount);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "읽지 않은 메시지 개수 조회 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    // ✅ 8. 메시지 대시보드
     @GetMapping("/dashboard")
     public ResponseEntity<Map<String, Object>> getMessageDashboard(
             @RequestHeader("User-Id") Long userId) {
-        Map<String, Object> dashboard = messageService.getMessageDashboard(userId);
-        return ResponseEntity.ok(dashboard);
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            Map<String, Object> dashboard = messageService.getMessageDashboard(userId);
+
+            response.put("success", true);
+            response.put("data", dashboard);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "대시보드 조회 실패: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
     }
 }
