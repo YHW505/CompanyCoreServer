@@ -57,6 +57,8 @@ public class LeaveRequestService {
     // 1. 휴가 신청
     public LeaveRequestResponse applyLeave(Long userId, LeaveType leaveType, LocalDate startDate,
                                            LocalDate endDate, String reason) {
+        System.out.println("휴가 신청 처리 시작 - 사용자: " + userId + ", 유형: " + leaveType);
+        
         if (!userRepository.existsById(userId)) {
             throw new RuntimeException("존재하지 않는 사용자입니다.");
         }
@@ -67,9 +69,16 @@ public class LeaveRequestService {
             throw new RuntimeException("과거 날짜로는 휴가를 신청할 수 없습니다.");
         }
 
-        LeaveRequest leaveRequest = new LeaveRequest(userId, leaveType, startDate, endDate, reason, LeaveStatus.PENDING);
-        LeaveRequest savedRequest = leaveRequestRepository.save(leaveRequest);
-        return convertToDTO(savedRequest);
+        try {
+            LeaveRequest leaveRequest = new LeaveRequest(userId, leaveType, startDate, endDate, reason, LeaveStatus.PENDING);
+            LeaveRequest savedRequest = leaveRequestRepository.save(leaveRequest);
+            System.out.println("휴가 신청 저장 성공 - ID: " + savedRequest.getLeaveId());
+            return convertToDTO(savedRequest);
+        } catch (Exception e) {
+            System.err.println("휴가 신청 저장 실패: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     // 2. 휴가 신청 조회 (필터링 가능)
@@ -113,6 +122,8 @@ public class LeaveRequestService {
 
     // 거부 사유 포함 메서드
     public LeaveRequestResponse processLeave(Integer leaveId, Long approverId, LeaveStatus newStatus, String rejectionReason) {
+        System.out.println("휴가 처리 시작 - 휴가ID: " + leaveId + ", 처리자ID: " + approverId + ", 상태: " + newStatus);
+        
         if (!userRepository.existsById(approverId)) {
             throw new RuntimeException("존재하지 않는 승인자입니다.");
         }
@@ -123,23 +134,32 @@ public class LeaveRequestService {
         }
 
         LeaveRequest request = requestOpt.get();
+        System.out.println("휴가 신청 찾음 - 현재 상태: " + request.getStatus());
+        
         if (request.getStatus() != LeaveStatus.PENDING) {
             throw new RuntimeException("이미 처리된 휴가 신청입니다.");
         }
 
-        request.setStatus(newStatus);
-        request.setApprovedBy(approverId);
-        request.setApprovedAt(LocalDateTime.now());
+        try {
+            request.setStatus(newStatus);
+            request.setApprovedBy(approverId);
+            request.setApprovedAt(LocalDateTime.now());
 
-        // 거부인 경우 거부 관련 정보 설정
-        if (newStatus == LeaveStatus.REJECTED) {
-            request.setRejectedBy(approverId);
-            request.setRejectionReason(rejectionReason);
-            request.setRejectedAt(LocalDateTime.now());
+            // 거부인 경우 거부 관련 정보 설정
+            if (newStatus == LeaveStatus.REJECTED) {
+                request.setRejectedBy(approverId);
+                request.setRejectionReason(rejectionReason);
+                request.setRejectedAt(LocalDateTime.now());
+            }
+
+            LeaveRequest savedRequest = leaveRequestRepository.save(request);
+            System.out.println("휴가 처리 완료 - ID: " + savedRequest.getLeaveId() + ", 상태: " + savedRequest.getStatus());
+            return convertToDTO(savedRequest);
+        } catch (Exception e) {
+            System.err.println("휴가 처리 실패: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
         }
-
-        LeaveRequest savedRequest = leaveRequestRepository.save(request);
-        return convertToDTO(savedRequest);
     }
 
 

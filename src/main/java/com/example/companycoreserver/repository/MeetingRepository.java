@@ -39,4 +39,19 @@ public interface MeetingRepository extends JpaRepository<Meeting, Long> {
     List<Meeting> findMeetingsThisWeek(@Param("weekStart") LocalDateTime weekStart,
                                        @Param("weekEnd") LocalDateTime weekEnd);
 
+    // 7. 부서별 회의 조회
+    List<Meeting> findByDepartmentOrderByStartTimeDesc(String department);
+
+    // 8. 부서별 현재 진행중인 회의 조회
+    @Query("SELECT m FROM Meeting m WHERE m.department = :department AND m.startTime <= :now AND m.endTime >= :now")
+    List<Meeting> findCurrentMeetingsByDepartment(@Param("department") String department, @Param("now") LocalDateTime now);
+
+    // 9. 부서별 예정된 회의 조회
+    @Query("SELECT m FROM Meeting m WHERE m.department = :department AND m.startTime > :now ORDER BY m.startTime ASC")
+    List<Meeting> findUpcomingMeetingsByDepartment(@Param("department") String department, @Param("now") LocalDateTime now);
+
+    // 10. 부서별 완료된 회의 조회
+    @Query("SELECT m FROM Meeting m WHERE m.department = :department AND m.endTime < :now ORDER BY m.startTime DESC")
+    List<Meeting> findPastMeetingsByDepartment(@Param("department") String department, @Param("now") LocalDateTime now);
+
 }

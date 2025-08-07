@@ -30,7 +30,19 @@ public class UserController {
     @PostMapping("/create")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
         try {
-            System.out.println("=== /users/register 요청 받음 ===");
+            System.out.println("=== /users/create 요청 받음 ===");
+            System.out.println("받은 사용자 데이터: " + user);
+
+            // 필수 필드 검증
+            if (user.getEmail() == null || user.getEmail().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("이메일은 필수입니다.");
+            }
+            if (user.getEmployeeCode() == null || user.getEmployeeCode().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("사원번호는 필수입니다.");
+            }
+            if (user.getUsername() == null || user.getUsername().trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("이름은 필수입니다.");
+            }
 
             // 이메일 중복 체크
             if (userService.isEmailExists(user.getEmail())) {
@@ -45,10 +57,12 @@ public class UserController {
             }
 
             User createdUser = userService.createUser(user);
+            System.out.println("사용자 생성 성공: " + createdUser.getUserId());
             return ResponseEntity.ok(createdUser);
 
         } catch (Exception e) {
             System.err.println("Error in registerUser: " + e.getMessage());
+            e.printStackTrace();
             return ResponseEntity.status(500)
                     .body("사용자 생성 중 오류가 발생했습니다: " + e.getMessage());
         }
