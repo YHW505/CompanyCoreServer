@@ -512,4 +512,83 @@ public class ApprovalController {
 
         return ResponseEntity.ok(responses);
     }
+    @GetMapping("/{approvalId}/download")
+    public ResponseEntity<?> downloadAttachment(@PathVariable Long approvalId) {
+        try {
+            System.out.println("=== 첨부파일 다운로드 요청 - 결재 ID: " + approvalId + " ===");
+
+            Approval approval = approvalService.getApprovalById(approvalId);
+
+            // 첨부파일이 없는 경우
+            if (approval.getAttachmentFilename() == null || approval.getAttachmentContent() == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // 파일 데이터 디코딩 (Base64로 저장된 경우)
+            byte[] fileData;
+            try {
+                fileData = java.util.Base64.getDecoder().decode(approval.getAttachmentContent());
+            } catch (IllegalArgumentException e) {
+                // Base64가 아닌 경우 바이트 배열로 직접 처리
+                fileData = approval.getAttachmentContent().getBytes();
+            }
+
+            // Content-Type 설정
+            String contentType = approval.getAttachmentContentType();
+            if (contentType == null || contentType.isEmpty()) {
+                contentType = "application/octet-stream"; // 기본값
+            }
+
+            System.out.println("첨부파일 다운로드 성공 - 파일명: " + approval.getAttachmentFilename() +
+                    ", 크기: " + fileData.length + " bytes");
+
+            return ResponseEntity.ok()
+                    .header("Content-Disposition", "attachment; filename=\"" + approval.getAttachmentFilename() + "\"")
+                    .header("Content-Type", contentType)
+                    .header("Content-Length", String.valueOf(fileData.length))
+                    .body(fileData);
+
+        } catch (RuntimeException e) {
+            System.err.println("첨부파일 다운로드 실패 - 결재를 찾을 수 없음: " + e.getMessage());
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            System.err.println("첨부파일 다운로드 중 오류 발생: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "success", false,
+                            "message", "첨부파일 다운로드 중 오류가 발생했습니다.",
+                            "error", e.getMessage()
+                    ));
+        }
+    }
+
+    // 🆕 첨부파일 정보만 조회 (다운로드 전 확인용)
+    @GetMapping("/{approvalId}/attachment-info")
+    public ResponseEntity<?> getAttachmentInfo(@PathVariable Long approvalId) {
+        try {
+            Approval approval = approvalService.getApprovalById(approvalId);
+
+            if (approval.getAttachmentFilename() == null) {
+                return ResponseEntity.ok(Map.of(
+                        "hasAttachment", false,
+                        "message", "첨부파일이 없습니다."
+                ));
+            }
+
+            Map<String, Object> attachmentInfo = new HashMap<>();
+            attachmentInfo.put("hasAttachment", true);
+            attachmentInfo.put("filename", approval.getAttachmentFilename());
+            attachmentInfo.put("contentType", approval.getAttachmentContentType());
+            attachmentInfo.put("size", approval.getAttachmentSize());
+
+            return ResponseEntity.ok(attachmentInfo);
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "첨부파일 정보 조회 실패: " + e.getMessage()));
+        }
+    }
 }

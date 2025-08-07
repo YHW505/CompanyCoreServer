@@ -1,5 +1,6 @@
 package com.example.companycoreserver.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
@@ -46,6 +47,7 @@ public class Meeting {
 
     @Lob
     @Column(columnDefinition = "LONGTEXT")
+    @JsonIgnore
     private String attachmentContent; // Base64 인코딩된 첨부파일 내용
 
     @Column(length = 255)
