@@ -4,6 +4,7 @@ import com.example.companycoreserver.entity.Meeting;
 import com.example.companycoreserver.repository.MeetingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -298,5 +299,52 @@ public class MeetingController {
         }
 
         return ResponseEntity.notFound().build();
+    }
+
+    // 🆕 부서별 회의 목록 조회
+    @GetMapping("/department/{department}")
+    public ResponseEntity<List<Meeting>> getMeetingsByDepartment(@PathVariable String department) {
+        try {
+            List<Meeting> meetings = meetingRepository.findByDepartmentOrderByStartTimeDesc(department);
+            return ResponseEntity.ok(meetings);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // 🆕 부서별 현재 진행중인 회의 조회
+    @GetMapping("/department/{department}/current")
+    public ResponseEntity<List<Meeting>> getCurrentMeetingsByDepartment(@PathVariable String department) {
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            List<Meeting> meetings = meetingRepository.findCurrentMeetingsByDepartment(department, now);
+            return ResponseEntity.ok(meetings);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // 🆕 부서별 예정된 회의 조회
+    @GetMapping("/department/{department}/upcoming")
+    public ResponseEntity<List<Meeting>> getUpcomingMeetingsByDepartment(@PathVariable String department) {
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            List<Meeting> meetings = meetingRepository.findUpcomingMeetingsByDepartment(department, now);
+            return ResponseEntity.ok(meetings);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // 🆕 부서별 완료된 회의 조회
+    @GetMapping("/department/{department}/past")
+    public ResponseEntity<List<Meeting>> getPastMeetingsByDepartment(@PathVariable String department) {
+        try {
+            LocalDateTime now = LocalDateTime.now();
+            List<Meeting> meetings = meetingRepository.findPastMeetingsByDepartment(department, now);
+            return ResponseEntity.ok(meetings);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

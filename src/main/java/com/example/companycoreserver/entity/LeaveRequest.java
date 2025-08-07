@@ -22,7 +22,7 @@ public class LeaveRequest {
     private Long userId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "leave_type")
+    @Column(name = "leave_type", length = 20)
     private LeaveType leaveType;
 
     @Column(name = "start_date")
