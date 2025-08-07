@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -81,14 +82,22 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Schedule> schedules = new ArrayList<>();
 
-    @OneToMany(mappedBy = "assignedToUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    //    @OneToMany(mappedBy = "assignedToUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    @JsonIgnore
+//    private List<Task> assignedTasks = new ArrayList<>();
+//
+//    @OneToMany(mappedBy = "assignedByUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    @JsonIgnore
+//    private List<Task> createdTasks = new ArrayList<>();
+// 1. 할당받은 업무들 - TaskAssignment를 통해 간접 연결
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
-    private List<Task> assignedTasks = new ArrayList<>();
+    private List<TaskAssignment> taskAssignments = new ArrayList<>();
 
-    @OneToMany(mappedBy = "assignedByUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // 2. 생성한 업무들 - Task의 createdByUser와 연결
+    @OneToMany(mappedBy = "createdByUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Task> createdTasks = new ArrayList<>();
-
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<LeaveRequest> leaves = new ArrayList<>();
@@ -102,7 +111,8 @@ public class User {
     private List<Message> receivedMessages = new ArrayList<>();
 
     // 기본 생성자
-    public User() {}
+    public User() {
+    }
 
     // 생성자
     public User(String employeeCode, String username, String email, String password,
@@ -117,78 +127,198 @@ public class User {
     }
 
     // Getter/Setter (모든 필드에 대해)
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
+    public Long getUserId() {
+        return userId;
+    }
 
-    public String getEmployeeCode() { return employeeCode; }
-    public void setEmployeeCode(String employeeCode) { this.employeeCode = employeeCode; }
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+    public String getEmployeeCode() {
+        return employeeCode;
+    }
 
-    public LocalDate getJoinDate() { return joinDate; }
-    public void setJoinDate(LocalDate joinDate) { this.joinDate = joinDate; }
+    public void setEmployeeCode(String employeeCode) {
+        this.employeeCode = employeeCode;
+    }
 
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
+    public String getUsername() {
+        return username;
+    }
 
-    public Integer getPositionId() { return positionId; }
-    public void setPositionId(Integer positionId) { this.positionId = positionId; }
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-    public Integer getDepartmentId() { return departmentId; }
-    public void setDepartmentId(Integer departmentId) { this.departmentId = departmentId; }
+    public LocalDate getJoinDate() {
+        return joinDate;
+    }
 
-    public Role getRole() { return role; }
-    public void setRole(Role role) { this.role = role; }
+    public void setJoinDate(LocalDate joinDate) {
+        this.joinDate = joinDate;
+    }
 
-    public Integer getIsFirstLogin() { return isFirstLogin; }
-    public void setIsFirstLogin(Integer isFirstLogin) { this.isFirstLogin = isFirstLogin; }
+    public String getPassword() {
+        return password;
+    }
 
-    public Integer getIsActive() { return isActive; }
-    public void setIsActive(Integer isActive) { this.isActive = isActive; }
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public Integer getPositionId() {
+        return positionId;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public void setPositionId(Integer positionId) {
+        this.positionId = positionId;
+    }
 
-    public String getPhone() { return phone; }
-    public void setPhone(String phone) { this.phone = phone; }
+    public Integer getDepartmentId() {
+        return departmentId;
+    }
 
-    public LocalDate getBirthDate() { return birthDate; }
-    public void setBirthDate(LocalDate birthDate) { this.birthDate = birthDate; }
+    public void setDepartmentId(Integer departmentId) {
+        this.departmentId = departmentId;
+    }
 
-    public Position getPosition() { return position; }
-    public void setPosition(Position position) { this.position = position; }
+    public Role getRole() {
+        return role;
+    }
 
-    public Department getDepartment() { return department; }
-    public void setDepartment(Department department) { this.department = department; }
+    public void setRole(Role role) {
+        this.role = role;
+    }
+
+    public Integer getIsFirstLogin() {
+        return isFirstLogin;
+    }
+
+    public void setIsFirstLogin(Integer isFirstLogin) {
+        this.isFirstLogin = isFirstLogin;
+    }
+
+    public Integer getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Integer isActive) {
+        this.isActive = isActive;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public Position getPosition() {
+        return position;
+    }
+
+    public void setPosition(Position position) {
+        this.position = position;
+    }
+
+    public Department getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(Department department) {
+        this.department = department;
+    }
 
     // 관계 필드들의 Getter/Setter...
-    public List<Attendance> getAttendances() { return attendances; }
-    public void setAttendances(List<Attendance> attendances) { this.attendances = attendances; }
+    public List<Attendance> getAttendances() {
+        return attendances;
+    }
 
-    public List<Schedule> getSchedules() { return schedules; }
-    public void setSchedules(List<Schedule> schedules) { this.schedules = schedules; }
+    public void setAttendances(List<Attendance> attendances) {
+        this.attendances = attendances;
+    }
 
-    public List<Task> getAssignedTasks() { return assignedTasks; }
-    public void setAssignedTasks(List<Task> assignedTasks) { this.assignedTasks = assignedTasks; }
+    public List<Schedule> getSchedules() {
+        return schedules;
+    }
 
-    public List<Task> getCreatedTasks() { return createdTasks; }
-    public void setCreatedTasks(List<Task> createdTasks) { this.createdTasks = createdTasks; }
+    public void setSchedules(List<Schedule> schedules) {
+        this.schedules = schedules;
+    }
 
-    public List<LeaveRequest> getLeaves() { return leaves; }
-    public void setLeaves(List<LeaveRequest> leaves) { this.leaves = leaves; }
+    public List<TaskAssignment> getTaskAssignments() {
+        return taskAssignments;
+    }
 
-    public List<Message> getSentMessages() { return sentMessages; }
-    public void setSentMessages(List<Message> sentMessages) { this.sentMessages = sentMessages; }
+    public void setTaskAssignments(List<TaskAssignment> taskAssignments) {
+        this.taskAssignments = taskAssignments;
+    }
 
-    public List<Message> getReceivedMessages() { return receivedMessages; }
-    public void setReceivedMessages(List<Message> receivedMessages) { this.receivedMessages = receivedMessages; }
+    public List<Task> getCreatedTasks() {
+        return createdTasks;
+    }
 
-    public String getAddress() { return address; }
-    public void setAddress(String address) { this.address = address; }
+    public void setCreatedTasks(List<Task> createdTasks) {
+        this.createdTasks = createdTasks;
+    }
+
+    public List<LeaveRequest> getLeaves() {
+        return leaves;
+    }
+
+    public void setLeaves(List<LeaveRequest> leaves) {
+        this.leaves = leaves;
+    }
+
+    public List<Message> getSentMessages() {
+        return sentMessages;
+    }
+
+    public void setSentMessages(List<Message> sentMessages) {
+        this.sentMessages = sentMessages;
+    }
+
+    public List<Message> getReceivedMessages() {
+        return receivedMessages;
+    }
+
+    public void setReceivedMessages(List<Message> receivedMessages) {
+        this.receivedMessages = receivedMessages;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
 
     @PrePersist
     protected void onCreate() {

@@ -1,6 +1,8 @@
 package com.example.companycoreserver.service;
 
+import com.example.companycoreserver.dto.ApprovalResponse;
 import com.example.companycoreserver.entity.Approval;
+import com.example.companycoreserver.entity.Department;
 import com.example.companycoreserver.entity.User;
 import com.example.companycoreserver.entity.Enum.ApprovalStatus;
 import com.example.companycoreserver.repository.ApprovalRepository;
@@ -14,6 +16,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.stream.Collectors;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +32,54 @@ public class ApprovalService {
 
     @Autowired
     private UserRepository userRepository;
+
+    // 🔄 Approval → ApprovalResponse 변환 메서드
+    private ApprovalResponse convertToApprovalResponse(Approval approval) {
+        // RequesterInfo 생성
+        ApprovalResponse.RequesterInfo requesterInfo = new ApprovalResponse.RequesterInfo(
+                approval.getRequester().getUserId(),
+                approval.getRequester().getEmployeeCode(),
+                approval.getRequester().getUsername(),
+                approval.getRequester().getPosition().getPositionName(), // Position 엔티티에서 이름 추출
+                approval.getRequester().getDepartment().getDepartmentName() // Department 엔티티에서 이름 추출
+        );
+
+        // ApproverInfo 생성 (승인자가 있는 경우만)
+        ApprovalResponse.ApproverInfo approverInfo = null;
+        if (approval.getApprover() != null) {
+            approverInfo = new ApprovalResponse.ApproverInfo(
+                    approval.getApprover().getUserId(),
+                    approval.getApprover().getEmployeeCode(),
+                    approval.getApprover().getUsername(),
+                    approval.getApprover().getPosition().getPositionName(),
+                    approval.getApprover().getDepartment().getDepartmentName()
+            );
+        }
+
+        // 첨부파일 Base64 인코딩 (있는 경우만)
+//        String attachmentContent = null;
+//        if (approval.getAttachmentData() != null) {
+//            attachmentContent = Base64.getEncoder().encodeToString(approval.getAttachmentData());
+//        }
+
+        // ApprovalResponse 생성 및 반환
+        return new ApprovalResponse(
+                approval.getId(),
+                approval.getTitle(),
+                approval.getContent(),
+                requesterInfo,
+                approverInfo,
+                approval.getRequestDate(),
+                approval.getStatus(),
+                approval.getRejectionReason(),
+                approval.getProcessedDate(),
+                approval.getAttachmentFilename(),
+                approval.getAttachmentContentType(),
+                approval.getAttachmentSize(),
+                approval.getCreatedAt(),
+                approval.getUpdatedAt()
+        );
+    }
 
     // ✅ 내가 요청한 결재 목록
     public List<Approval> getMyRequests(Long userId) {
@@ -44,10 +96,17 @@ public class ApprovalService {
         return approvalRepository.findPendingApprovalsByApproverId(userId);
     }
 
-    // 🆕 부서별 결재 목록 조회 (기본)
-    public List<Approval> getApprovalsByDepartment(String department) {
-        return approvalRepository.findByRequesterDepartmentOrderByRequestDateDesc(department);
+    // ✅ ApprovalResponse 리스트 반환
+    public List<ApprovalResponse> getApprovalsByDepartment(Department department) {
+        // 1️⃣ Repository에서 Approval 엔티티 리스트 조회
+        List<Approval> approvals = approvalRepository.findByRequesterDepartmentOrderByRequestDateDesc(department);
+
+        // 2️⃣ Approval → ApprovalResponse 변환
+        return approvals.stream()
+                .map(this::convertToApprovalResponse)
+                .collect(Collectors.toList());
     }
+
 
     // 🆕 부서별 결재 목록 조회 (페이지네이션 포함)
     public Map<String, Object> getApprovalsByDepartmentWithPagination(String department, int page, int size, String sortBy, String sortDir) {
@@ -67,39 +126,59 @@ public class ApprovalService {
         return response;
     }
 
-    // 🔄 결재 요청 생성 - 첨부파일 파라미터 수정
-        public Approval createApproval(String title, String content, Long requesterId, Long approverId,
-                                 String attachmentFilename, String attachmentContentType, Long attachmentSize,
-                                 String attachmentContent) {
+    // 🔄 결재 요청 생성 - 첨부파일 포함 (approverId null 허용)
+    public Approval createApproval(String title, String content, Long requesterId,
+                                   String attachmentFilename, String attachmentContentType, Long attachmentSize,
+                                   String attachmentContent) {
+
+//        log.info("결재 생성 - title: {}, requesterId: {}, approverId: {}", title, requesterId, approverId);
+
         User requester = userRepository.findById(requesterId)
                 .orElseThrow(() -> new RuntimeException("요청자를 찾을 수 없습니다."));
 
-        User approver = userRepository.findById(approverId)
-                .orElseThrow(() -> new RuntimeException("결재자를 찾을 수 없습니다."));
+        // ✅ approverId가 null이면 approver도 null로 설정
+        User approver = null;
+//        if (approverId != null) {
+//            approver = userRepository.findById(approverId)
+//                    .orElseThrow(() -> new RuntimeException("결재자를 찾을 수 없습니다."));
+//        }
 
-        // 🔄 새로운 생성자 사용 (첨부파일 메타데이터 포함)
+        // 🔄 생성자 호출 (approver null 가능)
         Approval approval = new Approval(title, content, requester, approver,
                 attachmentFilename, attachmentContentType, attachmentSize, attachmentContent);
-        
+
         return approvalRepository.save(approval);
     }
 
-    // 🆕 첨부파일 없는 결재 요청 생성 (오버로드)
-    public Approval createApproval(String title, String content, Long requesterId, Long approverId) {
-        return createApproval(title, content, requesterId, approverId, null, null, null, null);
+    // 🆕 첨부파일 없는 결재 요청 생성 (approverId null 허용)
+    public Approval createApproval(String title, String content, Long requesterId ) {
+        return createApproval(title, content, requesterId, null, null, null, null);
     }
 
-    // ✅ 결재 승인
+    // ✅ 결재 승인 - approverId 설정 및 상태 변경
     public Approval approveRequest(Long approvalId, Long approverId) {
+//        log.info("결재 승인 - approvalId: {}, approverId: {}", approvalId, approverId);
+
         Approval approval = approvalRepository.findById(approvalId)
                 .orElseThrow(() -> new RuntimeException("결재 요청을 찾을 수 없습니다."));
 
-        if (!approval.getApprover().getUserId().equals(approverId)) {
-            throw new RuntimeException("결재 권한이 없습니다.");
+        // ✅ 이미 처리된 결재인지 확인
+        if (!approval.isPending()) {
+            throw new RuntimeException("이미 처리된 결재입니다. 현재 상태: " + approval.getStatus());
         }
 
-        if (!approval.isPending()) {
-            throw new RuntimeException("이미 처리된 결재입니다.");
+        // ✅ 승인자 설정 (생성 시 null이었던 경우 여기서 설정)
+        User approver = userRepository.findById(approverId)
+                .orElseThrow(() -> new RuntimeException("승인자를 찾을 수 없습니다."));
+
+        // 🔄 기존 승인자가 있다면 권한 체크, 없다면 새로 설정
+        if (approval.getApprover() != null) {
+            if (!approval.getApprover().getUserId().equals(approverId)) {
+                throw new RuntimeException("결재 권한이 없습니다.");
+            }
+        } else {
+            // 승인자가 null이었던 경우 새로 설정
+            approval.setApprover(approver);
         }
 
         approval.setStatus(ApprovalStatus.APPROVED);
@@ -108,17 +187,30 @@ public class ApprovalService {
         return approvalRepository.save(approval);
     }
 
-    // ✅ 결재 거부
+    // ✅ 결재 거부 - approverId 설정 및 상태 변경
     public Approval rejectRequest(Long approvalId, Long approverId, String rejectionReason) {
+//        log.info("결재 거부 - approvalId: {}, approverId: {}", approvalId, approverId);
+
         Approval approval = approvalRepository.findById(approvalId)
                 .orElseThrow(() -> new RuntimeException("결재 요청을 찾을 수 없습니다."));
 
-        if (!approval.getApprover().getUserId().equals(approverId)) {
-            throw new RuntimeException("결재 권한이 없습니다.");
+        // ✅ 이미 처리된 결재인지 확인
+        if (!approval.isPending()) {
+            throw new RuntimeException("이미 처리된 결재입니다. 현재 상태: " + approval.getStatus());
         }
 
-        if (!approval.isPending()) {
-            throw new RuntimeException("이미 처리된 결재입니다.");
+        // ✅ 승인자 설정 (생성 시 null이었던 경우 여기서 설정)
+        User approver = userRepository.findById(approverId)
+                .orElseThrow(() -> new RuntimeException("승인자를 찾을 수 없습니다."));
+
+        // 🔄 기존 승인자가 있다면 권한 체크, 없다면 새로 설정
+        if (approval.getApprover() != null) {
+            if (!approval.getApprover().getUserId().equals(approverId)) {
+                throw new RuntimeException("결재 권한이 없습니다.");
+            }
+        } else {
+            // 승인자가 null이었던 경우 새로 설정
+            approval.setApprover(approver);
         }
 
         approval.setStatus(ApprovalStatus.REJECTED);
@@ -126,6 +218,16 @@ public class ApprovalService {
         approval.setProcessedDate(LocalDateTime.now());
 
         return approvalRepository.save(approval);
+    }
+
+    // 🆕 승인 대기 중인 결재 목록 조회 (승인자 미지정)
+    public List<Approval> getPendingApprovalsWithoutApprover() {
+        return approvalRepository.findByStatusAndApproverIsNull(ApprovalStatus.PENDING);
+    }
+
+    // 🆕 특정 승인자의 대기 중인 결재 목록
+    public List<Approval> getPendingApprovalsByApprover(Long approverId) {
+        return approvalRepository.findByStatusAndApprover_UserId(ApprovalStatus.PENDING, approverId);
     }
 
     // 🆕 결재 요청 수정

@@ -2,6 +2,7 @@ package com.example.companycoreserver.controller;
 
 import com.example.companycoreserver.dto.ApprovalResponse;
 import com.example.companycoreserver.entity.Approval;
+import com.example.companycoreserver.entity.Department;
 import com.example.companycoreserver.mapper.ApprovalMapper;
 import com.example.companycoreserver.service.ApprovalService;
 import com.example.companycoreserver.util.JwtUtil;
@@ -118,12 +119,12 @@ public class ApprovalController {
         return ResponseEntity.ok(responses);
     }
 
-    // 🆕 부서별 결재 목록 조회 (기본)
+    // ✅ ApprovalResponse로 변환해서 반환
     @GetMapping("/department/{department}")
-    public ResponseEntity<List<Approval>> getApprovalsByDepartment(
-            @PathVariable String department) {
+    public ResponseEntity<List<ApprovalResponse>> getApprovalsByDepartment(
+            @PathVariable Department department) {
         try {
-            List<Approval> approvals = approvalService.getApprovalsByDepartment(department);
+            List<ApprovalResponse> approvals = approvalService.getApprovalsByDepartment(department);
             return ResponseEntity.ok(approvals);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -212,10 +213,26 @@ public class ApprovalController {
 
             String content = (String) request.get("content");
 
+            // requesterId null 체크
+            Object requesterIdObj = request.get("requesterId");
+            if (requesterIdObj == null) {
+                return ResponseEntity.badRequest().body("요청자 ID는 필수입니다.");
+            }
+
+            // ✅ approverId는 선택사항으로 변경 (null 허용)
+            // Object approverIdObj = request.get("approverId");
+            // if (approverIdObj == null) {
+            //     return ResponseEntity.badRequest().body("승인자 ID는 필수입니다.");
+            // }
+
+            // 안전한 Long 변환
+            Long requesterId = Long.valueOf(requesterIdObj.toString());
+            // Long approverId = Long.valueOf(approverIdObj.toString()); // 제거
+
             // 🔄 첨부파일 메타데이터 추출
             String attachmentFilename = (String) request.get("attachmentFilename");
             String attachmentContentType = (String) request.get("attachmentContentType");
-            String attachmentContent = (String) request.get("attachmentContent"); // Base64 인코딩된 첨부파일 내용
+            String attachmentContent = (String) request.get("attachmentContent");
             Long attachmentSize = null;
 
             // attachmentSize 안전한 변환
@@ -228,34 +245,18 @@ public class ApprovalController {
                 }
             }
 
-            // requesterId null 체크
-            Object requesterIdObj = request.get("requesterId");
-            if (requesterIdObj == null) {
-                return ResponseEntity.badRequest().body("요청자 ID는 필수입니다.");
-            }
-
-            // approverId null 체크
-            Object approverIdObj = request.get("approverId");
-            if (approverIdObj == null) {
-                return ResponseEntity.badRequest().body("승인자 ID는 필수입니다.");
-            }
-
-            // 안전한 Long 변환
-            Long requesterId = Long.valueOf(requesterIdObj.toString());
-            Long approverId = Long.valueOf(approverIdObj.toString());
-
             System.out.println("파라미터 파싱 완료 - title: " + title + ", requesterId: " + requesterId +
-                    ", approverId: " + approverId + ", attachmentFilename: " + attachmentFilename);
+                    ", attachmentFilename: " + attachmentFilename);
 
-            // 🔄 새로운 Service 메서드 호출
+            // ✅ approverId 없이 결재 생성
             Approval approval;
             if (attachmentFilename != null && !attachmentFilename.trim().isEmpty()) {
                 // 첨부파일 있는 경우
-                approval = approvalService.createApproval(title, content, requesterId, approverId,
+                approval = approvalService.createApproval(title, content, requesterId,
                         attachmentFilename, attachmentContentType, attachmentSize, attachmentContent);
             } else {
                 // 첨부파일 없는 경우
-                approval = approvalService.createApproval(title, content, requesterId, approverId);
+                approval = approvalService.createApproval(title, content, requesterId);
             }
 
             // Entity → DTO 변환
@@ -266,7 +267,7 @@ public class ApprovalController {
 
         } catch (NumberFormatException e) {
             System.err.println("ID 형식 오류: " + e.getMessage());
-            return ResponseEntity.badRequest().body("requesterId와 approverId는 숫자여야 합니다.");
+            return ResponseEntity.badRequest().body("requesterId는 숫자여야 합니다.");
 
         } catch (Exception e) {
             System.err.println("결재 생성 실패: " + e.getMessage());
@@ -275,6 +276,7 @@ public class ApprovalController {
                     .body("결재 생성 중 오류가 발생했습니다: " + e.getMessage());
         }
     }
+
 
     // ✅ 결재 승인 - DTO 변환
     @PostMapping("/approve/{approvalId}")

@@ -29,7 +29,7 @@ public class ApprovalResponse {
                             ApproverInfo approver, LocalDateTime requestDate, ApprovalStatus status,
                             String rejectionReason, LocalDateTime processedDate,
                             String attachmentFilename, String attachmentContentType, Long attachmentSize,
-                            String attachmentContent, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                            LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.title = title;
         this.content = content;
@@ -42,7 +42,7 @@ public class ApprovalResponse {
         this.attachmentFilename = attachmentFilename;
         this.attachmentContentType = attachmentContentType;
         this.attachmentSize = attachmentSize;
-        this.attachmentContent = attachmentContent;
+//        this.attachmentContent = attachmentContent;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }

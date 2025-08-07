@@ -1,6 +1,7 @@
 package com.example.companycoreserver.repository;
 
 import com.example.companycoreserver.entity.Approval;
+import com.example.companycoreserver.entity.Department;
 import com.example.companycoreserver.entity.Enum.ApprovalStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -27,8 +28,14 @@ public interface ApprovalRepository extends JpaRepository<Approval, Long> {
     @Query("SELECT a FROM Approval a WHERE a.approver.userId = :userId AND a.status = 'PENDING' ORDER BY a.requestDate DESC")
     List<Approval> findPendingApprovalsByApproverId(@Param("userId") Long userId);
 
+    // 🆕 승인자가 지정되지 않은 대기 중인 결재
+    List<Approval> findByStatusAndApproverIsNull(ApprovalStatus status);
+
+    // 🆕 특정 승인자의 대기 중인 결재
+    List<Approval> findByStatusAndApprover_UserId(ApprovalStatus status, Long approverId);
+
     // 🆕 부서별 결재 목록 조회 (기본) - 요청일 기준 내림차순 정렬
-    List<Approval> findByRequesterDepartmentOrderByRequestDateDesc(String department);
+    List<Approval> findByRequesterDepartmentOrderByRequestDateDesc(Department department);
 
     // 🆕 부서별 결재 목록 조회 (페이지네이션 포함)
     Page<Approval> findByRequesterDepartment(String department, Pageable pageable);
