@@ -3,99 +3,103 @@ package com.example.companycoreserver.service;
 import com.example.companycoreserver.dto.MessageRequest;
 import com.example.companycoreserver.dto.MessageResponse;
 import com.example.companycoreserver.dto.MessageSummaryResponse;
-import com.example.companycoreserver.entity.Enum.MessageType;
 import com.example.companycoreserver.entity.Message;
 import com.example.companycoreserver.entity.User;
+import com.example.companycoreserver.entity.Enum.MessageType;
 import com.example.companycoreserver.repository.MessageRepository;
 import com.example.companycoreserver.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
+@Transactional
 public class MessageService {
 
-    @Autowired
-    private MessageRepository messageRepository;
-
-    @Autowired
-    private UserRepository userRepository;
+    private final MessageRepository messageRepository;
+    private final UserRepository userRepository;
 
     // ✅ 1. 메시지 전송
-    // MessageService의 sendMessage 메소드 수정
-    @Transactional
-    public MessageResponse sendMessage(MessageRequest request, Long senderId) {
-        System.out.println("메시지 전송 요청: 제목=" + request.getTitle() + ", 발신자ID=" + senderId);
-
-        User sender = userRepository.findById(senderId)
-                .orElseThrow(() -> new RuntimeException("발신자를 찾을 수 없습니다"));
-
+    public MessageResponse sendMessage(Long senderId, MessageRequest request) {
+        // 수신자 조회
         User receiver = userRepository.findByEmail(request.getReceiverEmail())
-                .orElseThrow(() -> new RuntimeException("수신자를 찾을 수 없습니다"));
+                .orElseThrow(() -> new RuntimeException("수신자를 찾을 수 없습니다: " + request.getReceiverEmail()));
 
+        // 발신자 조회
+        User sender = userRepository.findById(senderId)
+                .orElseThrow(() -> new RuntimeException("발신자를 찾을 수 없습니다: " + senderId));
 
-
-        Message message = new Message(
-                senderId,
-                receiver.getUserId(),
-                request.getMessageType(), // ✅ enum 사용
-                request.getTitle(),
-                request.getContent()
-        );
-
-        // 📎 Base64 첨부파일 처리
-        if (request.getAttachmentContent() != null && !request.getAttachmentContent().trim().isEmpty()) {
-            try {
-                byte[] fileData = java.util.Base64.getDecoder().decode(request.getAttachmentContent());
-
-                message.setAttachmentFilename(request.getAttachmentFileName());
-                message.setAttachmentContentType(request.getAttachmentContentType());
-                message.setAttachmentContent(request.getAttachmentContent());
-                message.setAttachmentSize((long) fileData.length);
-
-                System.out.println("첨부파일 처리 완료: " + request.getAttachmentFileName());
-            } catch (Exception e) {
-                System.err.println("첨부파일 Base64 디코딩 실패: " + e.getMessage());
-            }
+        // 메시지 생성
+        Message message;
+        if (request.hasAttachment()) {
+            message = new Message(
+                    senderId,
+                    receiver.getUserId(),
+                    request.getMessageType(),
+                    request.getTitle(),
+                    request.getContent(),
+                    request.getAttachmentContentType(),
+                    request.getAttachmentSize(),
+                    request.getAttachmentContent(),
+                    request.getAttachmentFileName()
+            );
+        } else {
+            message = new Message(
+                    senderId,
+                    receiver.getUserId(),
+                    request.getMessageType(),
+                    request.getTitle(),
+                    request.getContent()
+            );
         }
 
         Message savedMessage = messageRepository.save(message);
+
         return convertToMessageResponse(savedMessage, sender, receiver);
     }
 
-
-    // ✅ 2. 메시지 목록 조회
-    public List<MessageSummaryResponse> getMessages(Long userId, String type, String keyword, boolean unreadOnly) {
-        List<Message> messages;
+    // ✅ 2. 메시지 조회 (통합)
+    @Transactional(readOnly = true)
+    public List<MessageSummaryResponse> getMessages(Long userId, String type, String messageType,
+                                                    String keyword, boolean unreadOnly) {
+        List<Message> messages = new ArrayList<>();
 
         switch (type.toLowerCase()) {
+            case "received":
+                if (unreadOnly) {
+                    messages = messageRepository.findByReceiverIdAndIsReadFalseOrderBySentAtDesc(userId);
+                } else {
+                    messages = messageRepository.findByReceiverIdOrderBySentAtDesc(userId);
+                }
+                break;
             case "sent":
                 messages = messageRepository.findBySenderIdOrderBySentAtDesc(userId);
                 break;
-            case "unread":
-                messages = messageRepository.findByReceiverIdAndIsReadFalseOrderBySentAtDesc(userId);
-                break;
-            case "received":
-            default:
-                messages = messageRepository.findByReceiverIdOrderBySentAtDesc(userId);
+            case "all":
+                List<Message> received = messageRepository.findByReceiverIdOrderBySentAtDesc(userId);
+                List<Message> sent = messageRepository.findBySenderIdOrderBySentAtDesc(userId);
+                messages.addAll(received);
+                messages.addAll(sent);
+                messages.sort((m1, m2) -> m2.getSentAt().compareTo(m1.getSentAt()));
                 break;
         }
 
-        if (keyword != null && !keyword.trim().isEmpty()) {
+        // 메시지 타입 필터링
+        if (messageType != null && !messageType.isEmpty()) {
             messages = messages.stream()
-                    .filter(m -> m.getTitle().contains(keyword) || m.getContent().contains(keyword))
+                    .filter(m -> m.getMessageType().name().equals(messageType))
                     .collect(Collectors.toList());
         }
 
-        if (unreadOnly) {
+        // 키워드 검색
+        if (keyword != null && !keyword.isEmpty()) {
             messages = messages.stream()
-                    .filter(m -> !m.getIsRead())
+                    .filter(m -> m.getTitle().contains(keyword) || m.getContent().contains(keyword))
                     .collect(Collectors.toList());
         }
 
@@ -105,127 +109,227 @@ public class MessageService {
     }
 
     // ✅ 3. 메시지 상세 조회
-    public MessageResponse getMessageById(Integer id) {
-        Message message = messageRepository.findByMessageId(id)
-                .orElseThrow(() -> new RuntimeException("메시지를 찾을 수 없습니다"));
+    @Transactional(readOnly = true)
+    public MessageResponse getMessageDetail(Integer messageId, Long userId) {
+        Message message = messageRepository.findByMessageId(messageId)
+                .orElseThrow(() -> new RuntimeException("메시지를 찾을 수 없습니다: " + messageId));
+
+        // 권한 체크 (발신자 또는 수신자만 조회 가능)
+        if (!message.getSenderId().equals(userId) && !message.getReceiverId().equals(userId)) {
+            throw new RuntimeException("메시지 조회 권한이 없습니다.");
+        }
+
+        // 수신자가 조회할 때 읽음 처리
+        if (message.getReceiverId().equals(userId) && !message.getIsRead()) {
+            message.setIsRead(true);
+            messageRepository.save(message);
+        }
 
         User sender = userRepository.findById(message.getSenderId())
-                .orElseThrow(() -> new RuntimeException("발신자 정보를 찾을 수 없습니다"));
-
+                .orElseThrow(() -> new RuntimeException("발신자 정보를 찾을 수 없습니다."));
         User receiver = userRepository.findById(message.getReceiverId())
-                .orElseThrow(() -> new RuntimeException("수신자 정보를 찾을 수 없습니다"));
+                .orElseThrow(() -> new RuntimeException("수신자 정보를 찾을 수 없습니다."));
 
         return convertToMessageResponse(message, sender, receiver);
     }
 
-    // ✅ 4. 메시지 읽음 처리
-    @Transactional
-    public MessageResponse markAsRead(Integer id, Long userId) {
-        Message message = messageRepository.findByMessageId(id)
-                .orElseThrow(() -> new RuntimeException("메시지를 찾을 수 없습니다"));
+    // ✅ 4. 메시지 상태 변경
+    public void updateMessageStatus(Integer messageId, Long userId, String action) {
+        Message message = messageRepository.findByMessageId(messageId)
+                .orElseThrow(() -> new RuntimeException("메시지를 찾을 수 없습니다: " + messageId));
 
+        // 권한 체크
         if (!message.getReceiverId().equals(userId)) {
-            throw new RuntimeException("메시지를 읽을 권한이 없습니다");
+            throw new RuntimeException("메시지 상태 변경 권한이 없습니다.");
         }
 
-        message.setIsRead(true);
-        Message savedMessage = messageRepository.save(message);
+        switch (action.toLowerCase()) {
+            case "read":
+                message.setIsRead(true);
+                messageRepository.save(message);
+                break;
+            case "delete":
+                messageRepository.delete(message);
+                break;
+            default:
+                throw new RuntimeException("지원하지 않는 액션입니다: " + action);
+        }
+    }
 
-        User sender = userRepository.findById(message.getSenderId()).orElse(null);
-        User receiver = userRepository.findById(message.getReceiverId()).orElse(null);
+    // ✅ 5. 메시지 일괄 처리
+    public int bulkUpdateMessages(List<Integer> messageIds, Long userId, String action) {
+        List<Message> messages = messageIds.stream()
+                .map(id -> messageRepository.findByMessageId(id)
+                        .orElseThrow(() -> new RuntimeException("메시지를 찾을 수 없습니다: " + id)))
+                .filter(message -> message.getReceiverId().equals(userId)) // 권한 체크
+                .collect(Collectors.toList());
 
+        switch (action.toLowerCase()) {
+            case "read":
+                messages.forEach(message -> message.setIsRead(true));
+                messageRepository.saveAll(messages);
+                break;
+            case "delete":
+                messageRepository.deleteAll(messages);
+                break;
+            default:
+                throw new RuntimeException("지원하지 않는 액션입니다: " + action);
+        }
+
+        return messages.size();
+    }
+
+    // ✅ 6. 메시지 답장
+    public MessageResponse replyMessage(Integer originalMessageId, Long userId, String title, String content) {
+        Message originalMessage = messageRepository.findByMessageId(originalMessageId)
+                .orElseThrow(() -> new RuntimeException("원본 메시지를 찾을 수 없습니다: " + originalMessageId));
+
+        // 권한 체크 (수신자만 답장 가능)
+        if (!originalMessage.getReceiverId().equals(userId)) {
+            throw new RuntimeException("답장 권한이 없습니다.");
+        }
+
+        User sender = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("발신자를 찾을 수 없습니다: " + userId));
+        User receiver = userRepository.findById(originalMessage.getSenderId())
+                .orElseThrow(() -> new RuntimeException("수신자를 찾을 수 없습니다: " + originalMessage.getSenderId()));
+
+        // 답장 메시지 생성
+        Message replyMessage = new Message(
+                userId,
+                originalMessage.getSenderId(),
+                MessageType.MESSAGE,
+                title,
+                content
+        );
+
+        Message savedMessage = messageRepository.save(replyMessage);
         return convertToMessageResponse(savedMessage, sender, receiver);
     }
 
-    // ✅ 5. 메시지 삭제
-    @Transactional
-    public void deleteMessage(Integer id, Long userId) {
-        Message message = messageRepository.findByMessageId(id)
-                .orElseThrow(() -> new RuntimeException("메시지를 찾을 수 없습니다"));
+    // ✅ 7. 사용자 간 대화 조회
+    @Transactional(readOnly = true)
+    public List<MessageSummaryResponse> getConversation(Long userId, Long otherUserId) {
+        List<Message> messages = messageRepository.findConversationBetweenUsers(userId, otherUserId);
 
+        return messages.stream()
+                .map(this::convertToMessageSummaryResponse)
+                .collect(Collectors.toList());
+    }
+
+    // ✅ 8. 메시지 대시보드
+    @Transactional(readOnly = true)
+    public Map<String, Object> getDashboard(Long userId) {
+        Map<String, Object> dashboard = new HashMap<>();
+
+        // 읽지 않은 메시지 개수
+        Long unreadCount = messageRepository.countUnreadMessages(userId);
+        dashboard.put("unreadCount", unreadCount);
+
+        // 전체 받은 메시지 개수
+        List<Message> receivedMessages = messageRepository.findByReceiverIdOrderBySentAtDesc(userId);
+        dashboard.put("totalReceivedCount", receivedMessages.size());
+
+        // 전체 보낸 메시지 개수
+        List<Message> sentMessages = messageRepository.findBySenderIdOrderBySentAtDesc(userId);
+        dashboard.put("totalSentCount", sentMessages.size());
+
+        // 오늘 받은 메시지 개수
+        LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime endOfDay = LocalDateTime.now().withHour(23).withMinute(59).withSecond(59).withNano(999999999);
+        List<Message> todayMessages = messageRepository.findMessagesBetweenDates(userId, startOfDay, endOfDay);
+        dashboard.put("todayReceivedCount", todayMessages.size());
+
+        // 메시지 타입별 개수
+        Map<String, Long> typeCount = receivedMessages.stream()
+                .collect(Collectors.groupingBy(
+                        message -> message.getMessageType().name(),
+                        Collectors.counting()
+                ));
+        dashboard.put("messageTypeCount", typeCount.getOrDefault("MESSAGE", 0L));
+        dashboard.put("emailTypeCount", typeCount.getOrDefault("EMAIL", 0L));
+        dashboard.put("noticeTypeCount", typeCount.getOrDefault("NOTICE", 0L));
+
+        // 최근 메시지 (최대 5개)
+        List<MessageSummaryResponse> recentMessages = receivedMessages.stream()
+                .limit(5)
+                .map(this::convertToMessageSummaryResponse)
+                .collect(Collectors.toList());
+        dashboard.put("recentMessages", recentMessages);
+
+        // 통계 정보
+        Map<String, Object> statistics = new HashMap<>();
+        statistics.put("totalMessages", receivedMessages.size() + sentMessages.size());
+        statistics.put("readRate", receivedMessages.isEmpty() ? 0 :
+                (double)(receivedMessages.size() - unreadCount) / receivedMessages.size() * 100);
+        dashboard.put("statistics", statistics);
+
+        return dashboard;
+    }
+
+    // ✅ 9. 메시지 삭제
+    public void deleteMessage(Integer messageId, Long userId) {
+        Message message = messageRepository.findByMessageId(messageId)
+                .orElseThrow(() -> new RuntimeException("메시지를 찾을 수 없습니다: " + messageId));
+
+        // 권한 체크 (발신자 또는 수신자만 삭제 가능)
         if (!message.getSenderId().equals(userId) && !message.getReceiverId().equals(userId)) {
-            throw new RuntimeException("메시지를 삭제할 권한이 없습니다");
+            throw new RuntimeException("메시지 삭제 권한이 없습니다.");
         }
 
         messageRepository.delete(message);
     }
 
-    // ✅ 6. 첨부파일 다운로드
-    public String downloadAttachment(Integer messageId, Long userId) {
+    // ✅ 첨부파일 다운로드 (Base64 반환)
+    @Transactional(readOnly = true)
+    public Map<String, Object> downloadAttachment(Integer messageId, Long userId) {
         Message message = messageRepository.findByMessageId(messageId)
-                .orElseThrow(() -> new RuntimeException("메시지를 찾을 수 없습니다"));
+                .orElseThrow(() -> new RuntimeException("메시지를 찾을 수 없습니다: " + messageId));
 
+        // 권한 체크
         if (!message.getSenderId().equals(userId) && !message.getReceiverId().equals(userId)) {
-            throw new RuntimeException("첨부파일을 다운로드할 권한이 없습니다");
+            throw new RuntimeException("첨부파일 다운로드 권한이 없습니다.");
         }
 
         if (!message.hasAttachment()) {
-            throw new RuntimeException("첨부파일이 없습니다");
+            throw new RuntimeException("첨부파일이 없습니다.");
         }
 
-        return message.getAttachmentContent();
+        Map<String, Object> attachment = new HashMap<>();
+        attachment.put("filename", message.getAttachmentFilename());
+        attachment.put("contentType", message.getAttachmentContentType());
+        attachment.put("fileSize", message.getAttachmentSize());
+        attachment.put("fileData", message.getAttachmentContent());
+
+        return attachment;
     }
 
-    // ✅ 7. 읽지 않은 메시지 개수
-    public Long getUnreadCount(Long userId) {
-        return messageRepository.countUnreadMessages(userId);
-    }
-
-    // ✅ 8. 메시지 대시보드
-    public Map<String, Object> getMessageDashboard(Long userId) {
-        Map<String, Object> dashboard = new HashMap<>();
-
-        Long totalReceived = (long) messageRepository.findByReceiverIdOrderBySentAtDesc(userId).size();
-        Long totalSent = (long) messageRepository.findBySenderIdOrderBySentAtDesc(userId).size();
-        Long unreadCount = messageRepository.countUnreadMessages(userId);
-
-        dashboard.put("totalReceived", totalReceived);
-        dashboard.put("totalSent", totalSent);
-        dashboard.put("unreadCount", unreadCount);
-        dashboard.put("totalMessages", totalReceived + totalSent);
-
-        return dashboard;
-    }
-
-    // ========== 변환 메소드들 ==========
+    // DTO 변환 메서드들
     private MessageResponse convertToMessageResponse(Message message, User sender, User receiver) {
-        MessageResponse response = new MessageResponse();
-
-        // Message 엔티티 필드 매핑
-        response.setMessageId(message.getMessageId());
-        response.setSenderId(message.getSenderId());
-        response.setReceiverId(message.getReceiverId());
-        response.setMessageType(message.getMessageType().toString());
-        response.setTitle(message.getTitle());
-        response.setContent(message.getContent());
-        response.setRead(message.getIsRead());
-        response.setSentAt(message.getSentAt());
-
-        // 첨부파일 정보
-        response.setHasAttachment(message.hasAttachment());
-        response.setAttachmentContentType(message.getAttachmentContentType());
-        response.setAttachmentSize(message.getAttachmentSize());
-        response.setAttachmentFileName(message.getAttachmentFilename());
-
-        // 발신자 정보 - ✅ getUsername() 사용
-        if (sender != null) {
-            response.setSenderName(sender.getUsername()); // ✅ getName() → getUsername()
-            response.setSenderEmployeeCode(sender.getEmployeeCode());
-            response.setSenderPositionName(sender.getPosition() != null ? sender.getPosition().getPositionName() : "");
-            response.setSenderDepartmentName(sender.getDepartment() != null ? sender.getDepartment().getDepartmentName() : "");
-            response.setSenderEmail(sender.getEmail());
-        }
-
-        // 수신자 정보 - ✅ getUsername() 사용
-        if (receiver != null) {
-            response.setReceiverName(receiver.getUsername()); // ✅ getName() → getUsername()
-            response.setReceiverEmployeeCode(receiver.getEmployeeCode());
-            response.setReceiverPositionName(receiver.getPosition() != null ? receiver.getPosition().getPositionName() : "");
-            response.setReceiverDepartmentName(receiver.getDepartment() != null ? receiver.getDepartment().getDepartmentName() : "");
-            response.setReceiverEmail(receiver.getEmail());
-        }
-
-        return response;
+        return new MessageResponse(
+                message.getMessageId(),
+                message.getSenderId(),
+                message.getReceiverId(),
+                message.getMessageType().name(),
+                message.getTitle(),
+                message.getContent(),
+                message.getIsRead(),
+                message.getSentAt(),
+                message.hasAttachment(),
+                message.getAttachmentContentType(),
+                message.getAttachmentSize(),
+                message.getAttachmentFilename(),
+                sender.getUsername(),
+                sender.getEmployeeCode(),
+                sender.getPosition() != null ? sender.getPosition().getPositionName() : null,
+                sender.getDepartment() != null ? sender.getDepartment().getDepartmentName() : null,
+                sender.getEmail(),
+                receiver.getUsername(),
+                receiver.getEmployeeCode(),
+                receiver.getPosition() != null ? receiver.getPosition().getPositionName() : null,
+                receiver.getDepartment() != null ? receiver.getDepartment().getDepartmentName() : null,
+                receiver.getEmail()
+        );
     }
 
     private MessageSummaryResponse convertToMessageSummaryResponse(Message message) {
@@ -236,11 +340,11 @@ public class MessageService {
                 message.getMessageId(),
                 message.getTitle(),
                 message.getContent(),
-                sender != null ? sender.getUsername() : "알 수 없음", // ✅ getName() → getUsername()
-                receiver != null ? receiver.getUsername() : "알 수 없음", // ✅ getName() → getUsername()
+                sender != null ? sender.getUsername() : "알 수 없음",
+                receiver != null ? receiver.getUsername() : "알 수 없음",
                 message.getIsRead(),
                 message.getSentAt(),
-                message.getMessageType().toString(),
+                message.getMessageType().name(),
                 message.hasAttachment(),
                 message.getAttachmentFilename()
         );
