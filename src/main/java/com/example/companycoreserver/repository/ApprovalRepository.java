@@ -37,6 +37,12 @@ public interface ApprovalRepository extends JpaRepository<Approval, Long> {
     // 🆕 부서별 결재 목록 조회 (기본) - 요청일 기준 내림차순 정렬
     List<Approval> findByRequesterDepartmentOrderByRequestDateDesc(Department department);
 
+    // 🆕 부서별 + 상태별 결재 목록 조회
+    @Query("SELECT a FROM Approval a JOIN a.requester u WHERE u.department.departmentId = :department AND a.status = :status")
+    Page<Approval> findByRequesterDepartmentAndStatus(@Param("department") String department,
+                                                      @Param("status") ApprovalStatus status,
+                                                      Pageable pageable);
+
     // 🆕 부서별 결재 목록 조회 (페이지네이션 포함)
     Page<Approval> findByRequesterDepartment(String department, Pageable pageable);
 

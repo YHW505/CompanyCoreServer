@@ -131,6 +131,25 @@ public class ApprovalController {
         }
     }
 
+    @GetMapping("/department/{department}/pending")
+    public ResponseEntity<Map<String, Object>> getPendingApprovalsByDepartment(
+            @PathVariable String department,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "requestDate") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+
+        try {
+            Map<String, Object> result = approvalService.getPendingApprovalsByDepartmentWithPagination(
+                    department, page, size, sortBy, sortDir);
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("부서별 PENDING 결재 목록 조회 실패: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
     // 🆕 부서별 결재 목록 조회 (페이지네이션 포함)
     @GetMapping("/department/{department}/page")
     public ResponseEntity<Map<String, Object>> getApprovalsByDepartmentWithPagination(
