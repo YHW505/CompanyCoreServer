@@ -14,7 +14,7 @@ public class MessageSummaryResponse {
 
     // 🆕 첨부파일 관련 필드 추가
     private boolean hasAttachment;
-    private String attachmentFileName; // 파일명만 표시
+    private String attachmentFilename; // 파일명만 표시
 
     // 기본 생성자
     public MessageSummaryResponse() {}
@@ -32,7 +32,7 @@ public class MessageSummaryResponse {
         this.sentAt = sentAt;
         this.messageType = messageType;
         this.hasAttachment = hasAttachment;
-        this.attachmentFileName = attachmentFileName;
+        this.attachmentFilename = attachmentFileName;
     }
 
     // 기존 생성자 (첨부파일 없음)
@@ -123,11 +123,11 @@ public class MessageSummaryResponse {
         this.hasAttachment = hasAttachment;
     }
 
-    public String getAttachmentFileName() {
-        return attachmentFileName;
+    public String getAttachmentFilename() {
+        return attachmentFilename;
     }
 
-    public void setAttachmentFileName(String attachmentFileName) {
-        this.attachmentFileName = attachmentFileName;
+    public void setAttachmentFilename(String attachmentFileName) {
+        this.attachmentFilename = attachmentFileName;
     }
 }

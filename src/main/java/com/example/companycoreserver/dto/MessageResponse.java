@@ -25,8 +25,8 @@ public class MessageResponse {
     private Long attachmentSize;
 
     // ✅ JSON 직렬화 시 "attachmentFileName" 필드로 출력되도록 명시적 지정
-    @JsonProperty("attachmentFileName")
-    private String attachmentFileName;
+    @JsonProperty("attachmentFilename")
+    private String attachmentFilename;
 
     // 발신자 정보
     private String senderName;
@@ -64,7 +64,7 @@ public class MessageResponse {
         this.hasAttachment = hasAttachment;
         this.attachmentContentType = attachmentContentType;
         this.attachmentSize = attachmentSize;
-        this.attachmentFileName = attachmentFileName;
+        this.attachmentFilename = attachmentFileName;
         this.senderName = senderName;
         this.senderEmployeeCode = senderEmployeeCode;
         this.senderPositionName = senderPositionName;
@@ -168,12 +168,12 @@ public class MessageResponse {
         this.attachmentSize = attachmentSize;
     }
 
-    public String getAttachmentFileName() {
-        return attachmentFileName;
+    public String getAttachmentFilename() {
+        return attachmentFilename;
     }
 
-    public void setAttachmentFileName(String attachmentFileName) {
-        this.attachmentFileName = attachmentFileName;
+    public void setAttachmentFilename(String attachmentFileName) {
+        this.attachmentFilename = attachmentFileName;
     }
 
     // 사용자 정보 Getter & Setter들
