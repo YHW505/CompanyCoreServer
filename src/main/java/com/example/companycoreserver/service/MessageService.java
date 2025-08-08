@@ -24,12 +24,71 @@ public class MessageService {
     private final MessageRepository messageRepository;
     private final UserRepository userRepository;
 
-    /**
-     * ✅ 메시지 전송 (첨부파일 포함 가능)
-     */
+    //    /**
+//     * ✅ 메시지 전송 (첨부파일 포함 가능)
+//     */
+//    @Transactional
+//    public MessageResponse createMessage(Long senderId, MessageRequest requestDto) {
+//        System.out.println("메시지 전송 요청: 제목=" + requestDto.getTitle() + ", 발신자 ID=" + senderId);
+//
+//        // 수신자 조회
+//        User receiver = userRepository.findByEmail(requestDto.getReceiverEmail())
+//                .orElseThrow(() -> new RuntimeException("수신자를 찾을 수 없습니다: " + requestDto.getReceiverEmail()));
+//
+//        // 발신자 조회
+//        User sender = userRepository.findById(senderId)
+//                .orElseThrow(() -> new RuntimeException("발신자를 찾을 수 없습니다: " + senderId));
+//
+//        // 메시지 생성
+//        Message message = new Message(
+//                senderId,
+//                receiver.getUserId(),
+//                requestDto.getMessageType(),
+//                requestDto.getTitle(),
+//                requestDto.getContent()
+//        );
+//
+//        // 🆕 첨부파일 내용 처리 (Base64 디코딩)
+//        if (requestDto.getAttachmentContent() != null && !requestDto.getAttachmentContent().trim().isEmpty()) {
+//            try {
+//                // Base64 디코딩
+//                byte[] fileData = java.util.Base64.getDecoder().decode(requestDto.getAttachmentContent());
+//
+//                // 첨부파일 정보 설정
+//                message.setAttachmentFilename(requestDto.getAttachmentFilename());
+//                message.setAttachmentContentType(requestDto.getAttachmentContentType());
+//                message.setAttachmentContent(requestDto.getAttachmentContent()); // Base64 문자열
+//                message.setAttachmentSize((long) fileData.length);
+//
+//                System.out.println("첨부파일 처리 완료: " + requestDto.getAttachmentFilename() + " (" + fileData.length + " bytes) - Base64 내용 생략");
+//            } catch (Exception e) {
+//                System.err.println("첨부파일 Base64 디코딩 실패: " + e.getMessage());
+//                // 첨부파일 처리 실패 시 기본 정보만 저장
+//            }
+//        }
+//
+//        Message savedMessage = messageRepository.save(message);
+//
+//        System.out.println("메시지 전송 완료: ID=" + savedMessage.getMessageId());
+//        return convertToMessageResponse(savedMessage, sender, receiver);
+//    }
     @Transactional
     public MessageResponse createMessage(Long senderId, MessageRequest requestDto) {
         System.out.println("메시지 전송 요청: 제목=" + requestDto.getTitle() + ", 발신자 ID=" + senderId);
+
+        // === 디버깅 정보 시작 ===
+        System.out.println("=== 첨부파일 디버깅 정보 ===");
+        System.out.println("requestDto.getAttachmentFileName(): " + requestDto.getAttachmentFilename());
+        System.out.println("requestDto.getAttachmentContent() != null: " + (requestDto.getAttachmentContent() != null));
+        System.out.println("requestDto.getAttachmentContentType(): " + requestDto.getAttachmentContentType());
+        System.out.println("requestDto.getAttachmentSize(): " + requestDto.getAttachmentSize());
+        System.out.println("requestDto.hasAttachment(): " + requestDto.hasAttachment());
+
+        if (requestDto.getAttachmentContent() != null) {
+            System.out.println("AttachmentContent 길이: " + requestDto.getAttachmentContent().length());
+            System.out.println("AttachmentContent가 비어있는지: " + requestDto.getAttachmentContent().trim().isEmpty());
+        }
+        System.out.println("================================");
 
         // 수신자 조회
         User receiver = userRepository.findByEmail(requestDto.getReceiverEmail())
@@ -48,26 +107,61 @@ public class MessageService {
                 requestDto.getContent()
         );
 
+        System.out.println("메시지 생성 후 초기 첨부파일명: " + message.getAttachmentFilename());
+
         // 🆕 첨부파일 내용 처리 (Base64 디코딩)
         if (requestDto.getAttachmentContent() != null && !requestDto.getAttachmentContent().trim().isEmpty()) {
+            System.out.println("첨부파일 처리 시작...");
             try {
                 // Base64 디코딩
                 byte[] fileData = java.util.Base64.getDecoder().decode(requestDto.getAttachmentContent());
+                System.out.println("Base64 디코딩 성공, 파일 크기: " + fileData.length + " bytes");
+
+                // 첨부파일 정보 설정 전 로그
+                String filename = requestDto.getAttachmentFilename();
+                System.out.println("설정할 파일명: '" + filename + "'");
+                System.out.println("파일명이 null인지: " + (filename == null));
+                System.out.println("파일명이 비어있는지: " + (filename != null && filename.trim().isEmpty()));
 
                 // 첨부파일 정보 설정
-                message.setAttachmentFilename(requestDto.getAttachmentFileName());
+                message.setAttachmentFilename(requestDto.getAttachmentFilename());
                 message.setAttachmentContentType(requestDto.getAttachmentContentType());
                 message.setAttachmentContent(requestDto.getAttachmentContent()); // Base64 문자열
                 message.setAttachmentSize((long) fileData.length);
 
-                System.out.println("첨부파일 처리 완료: " + requestDto.getAttachmentFileName() + " (" + fileData.length + " bytes) - Base64 내용 생략");
+                // 설정 후 확인
+                System.out.println("메시지에 설정된 첨부파일 정보:");
+                System.out.println("  - 파일명: '" + message.getAttachmentFilename() + "'");
+                System.out.println("  - 콘텐츠 타입: '" + message.getAttachmentContentType() + "'");
+                System.out.println("  - 파일 크기: " + message.getAttachmentSize());
+                System.out.println("  - hasAttachment(): " + message.hasAttachment());
+
+                System.out.println("첨부파일 처리 완료: " + requestDto.getAttachmentFilename() + " (" + fileData.length + " bytes) - Base64 내용 생략");
             } catch (Exception e) {
                 System.err.println("첨부파일 Base64 디코딩 실패: " + e.getMessage());
+                e.printStackTrace();
                 // 첨부파일 처리 실패 시 기본 정보만 저장
+            }
+        } else {
+            System.out.println("첨부파일 없음 - 조건 확인:");
+            System.out.println("  - getAttachmentContent() == null: " + (requestDto.getAttachmentContent() == null));
+            if (requestDto.getAttachmentContent() != null) {
+                System.out.println("  - getAttachmentContent().trim().isEmpty(): " + requestDto.getAttachmentContent().trim().isEmpty());
             }
         }
 
+        System.out.println("저장 전 메시지 첨부파일 정보:");
+        System.out.println("  - 파일명: '" + message.getAttachmentFilename() + "'");
+        System.out.println("  - 콘텐츠 타입: '" + message.getAttachmentContentType() + "'");
+        System.out.println("  - 파일 크기: " + message.getAttachmentSize());
+
         Message savedMessage = messageRepository.save(message);
+
+        System.out.println("저장 후 메시지 첨부파일 정보:");
+        System.out.println("  - 파일명: '" + savedMessage.getAttachmentFilename() + "'");
+        System.out.println("  - 콘텐츠 타입: '" + savedMessage.getAttachmentContentType() + "'");
+        System.out.println("  - 파일 크기: " + savedMessage.getAttachmentSize());
+        System.out.println("  - hasAttachment(): " + savedMessage.hasAttachment());
 
         System.out.println("메시지 전송 완료: ID=" + savedMessage.getMessageId());
         return convertToMessageResponse(savedMessage, sender, receiver);
@@ -344,7 +438,7 @@ public class MessageService {
         Map<String, Object> statistics = new HashMap<>();
         statistics.put("totalMessages", receivedMessages.size() + sentMessages.size());
         statistics.put("readRate", receivedMessages.isEmpty() ? 0 :
-                (double)(receivedMessages.size() - unreadCount) / receivedMessages.size() * 100);
+                (double) (receivedMessages.size() - unreadCount) / receivedMessages.size() * 100);
         dashboard.put("statistics", statistics);
 
         return dashboard;

@@ -11,12 +11,13 @@ public class MessageRequest {
     // 🆕 첨부파일 관련 필드 추가
     private String attachmentContentType;
     private Long attachmentSize;
-    private String attachmentFileName; // 원본 파일명
+    private String attachmentFilename; // 원본 파일명
     private String attachmentContent; // Base64 인코딩된 파일 내용
 
 
     // 기본 생성자
-    public MessageRequest() {}
+    public MessageRequest() {
+    }
 
     // 전체 생성자 (첨부파일 포함)
     public MessageRequest(String receiverEmail, MessageType messageType, String title, String content,
@@ -27,7 +28,7 @@ public class MessageRequest {
         this.content = content;
         this.attachmentContentType = attachmentContentType;
         this.attachmentSize = attachmentSize;
-        this.attachmentFileName = attachmentFileName;
+        this.attachmentFilename = attachmentFilename;
         this.attachmentContent = attachmentContent;
     }
 
@@ -90,23 +91,24 @@ public class MessageRequest {
         this.attachmentSize = attachmentSize;
     }
 
-    public String getAttachmentFileName() {
-        return attachmentFileName;
+    public String getAttachmentFilename() {
+        return attachmentFilename;
     }
 
-    public void setAttachmentFileName(String attachmentFileName) {
-        this.attachmentFileName = attachmentFileName;
+    public void setAttachmentFilename(String attachmentFileName) {
+        this.attachmentFilename = attachmentFileName;
     }
 
     public String getAttachmentContent() {
         return attachmentContent;
     }
+
     public void setAttachmentContent(String attachmentContent) {
         this.attachmentContent = attachmentContent;
     }
 
     // 🆕 첨부파일 존재 여부 확인
     public boolean hasAttachment() {
-        return attachmentFileName != null && !attachmentFileName.trim().isEmpty();
+        return attachmentFilename != null && !attachmentFilename.trim().isEmpty();
     }
 }
