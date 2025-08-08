@@ -1,14 +1,10 @@
 package com.example.companycoreserver.service;
 
 import com.example.companycoreserver.entity.Task;
-import com.example.companycoreserver.entity.TaskAssignment;
 import com.example.companycoreserver.entity.User;
 import com.example.companycoreserver.entity.Enum.TaskStatus;
 import com.example.companycoreserver.entity.Enum.TaskType;
-import com.example.companycoreserver.entity.Enum.AssignmentRole;
-import com.example.companycoreserver.entity.Enum.AssignmentStatus;
 import com.example.companycoreserver.repository.TaskRepository;
-import com.example.companycoreserver.repository.TaskAssignmentRepository;
 import com.example.companycoreserver.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -33,9 +29,6 @@ public class TaskService {
     private TaskRepository taskRepository;
 
     @Autowired
-    private TaskAssignmentRepository taskAssignmentRepository;
-
-    @Autowired
     private UserRepository userRepository;
 
     // 모든 작업 조회
@@ -50,8 +43,8 @@ public class TaskService {
         }
     }
 
-    // ID로 작업 조회
-    public Optional<Task> getTaskById(Integer taskId) {
+    // ✅ ID로 작업 조회 (Long 타입으로 변경)
+    public Optional<Task> getTaskById(Long taskId) {
         try {
             return taskRepository.findById(taskId);
         } catch (Exception e) {
@@ -60,10 +53,10 @@ public class TaskService {
         }
     }
 
-    // ✅ 특정 사용자가 할당받은 작업 조회 (TaskAssignment 기반)
+    // ✅ 특정 사용자에게 할당된 작업 조회 (assignedTo 사용)
     public List<Task> getTasksByAssignedTo(Long userId) {
         try {
-            List<Task> tasks = taskRepository.findTasksAssignedToUser(userId);
+            List<Task> tasks = taskRepository.findByAssignedToOrderByCreatedAtDesc(userId);
             System.out.println("Found " + tasks.size() + " tasks assigned to user: " + userId);
             return tasks;
         } catch (Exception e) {
@@ -72,14 +65,14 @@ public class TaskService {
         }
     }
 
-    // ✅ 특정 사용자가 생성한 작업 조회 (createdBy 기반)
-    public List<Task> getTasksByCreatedBy(Long createdBy) {
+    // ✅ 특정 사용자가 생성한 작업 조회 (assignedBy 사용)
+    public List<Task> getTasksByCreatedBy(Long assignedBy) {
         try {
-            List<Task> tasks = taskRepository.findByCreatedByOrderByCreatedAtDesc(createdBy);
-            System.out.println("Found " + tasks.size() + " tasks created by user: " + createdBy);
+            List<Task> tasks = taskRepository.findByAssignedByOrderByCreatedAtDesc(assignedBy);
+            System.out.println("Found " + tasks.size() + " tasks created by user: " + assignedBy);
             return tasks;
         } catch (Exception e) {
-            System.err.println("Error fetching tasks by createdBy: " + e.getMessage());
+            System.err.println("Error fetching tasks by assignedBy: " + e.getMessage());
             throw new RuntimeException("Failed to fetch tasks", e);
         }
     }
@@ -108,22 +101,22 @@ public class TaskService {
         }
     }
 
-    // ✅ 특정 사용자가 생성한 특정 상태 작업 조회
-    public List<Task> getTasksByCreatedByAndStatus(Long createdBy, TaskStatus status) {
+    // ✅ 특정 사용자가 생성한 특정 상태 작업 조회 (assignedBy 사용)
+    public List<Task> getTasksByCreatedByAndStatus(Long assignedBy, TaskStatus status) {
         try {
-            return taskRepository.findByCreatedByAndStatusOrderByCreatedAtDesc(createdBy, status);
+            return taskRepository.findByAssignedByAndStatusOrderByCreatedAtDesc(assignedBy, status);
         } catch (Exception e) {
-            System.err.println("Error fetching tasks by createdBy and status: " + e.getMessage());
+            System.err.println("Error fetching tasks by assignedBy and status: " + e.getMessage());
             throw new RuntimeException("Failed to fetch tasks", e);
         }
     }
 
-    // ✅ 특정 사용자가 생성한 특정 타입 작업 조회
-    public List<Task> getTasksByCreatedByAndType(Long createdBy, TaskType taskType) {
+    // ✅ 특정 사용자가 생성한 특정 타입 작업 조회 (assignedBy 사용)
+    public List<Task> getTasksByCreatedByAndType(Long assignedBy, TaskType taskType) {
         try {
-            return taskRepository.findByCreatedByAndTaskTypeOrderByCreatedAtDesc(createdBy, taskType);
+            return taskRepository.findByAssignedByAndTaskTypeOrderByCreatedAtDesc(assignedBy, taskType);
         } catch (Exception e) {
-            System.err.println("Error fetching tasks by createdBy and taskType: " + e.getMessage());
+            System.err.println("Error fetching tasks by assignedBy and taskType: " + e.getMessage());
             throw new RuntimeException("Failed to fetch tasks", e);
         }
     }
@@ -168,10 +161,10 @@ public class TaskService {
         }
     }
 
-    // ✅ 복합 조건 검색 (수정됨)
-    public List<Task> getTasksByMultipleConditions(Long createdBy, TaskStatus status, TaskType taskType) {
+    // ✅ 복합 조건 검색 (assignedBy 사용)
+    public List<Task> getTasksByMultipleConditions(Long assignedBy, TaskStatus status, TaskType taskType) {
         try {
-            return taskRepository.findByMultipleConditions(createdBy, status, taskType);
+            return taskRepository.findByMultipleConditions(assignedBy, status, taskType);
         } catch (Exception e) {
             System.err.println("Error fetching tasks by multiple conditions: " + e.getMessage());
             throw new RuntimeException("Failed to fetch tasks", e);
@@ -194,10 +187,9 @@ public class TaskService {
                 task.updateAttachment(
                         attachmentFile.getOriginalFilename(),
                         attachmentFile.getContentType(),
-                        base64Content
+                        base64Content,
+                        attachmentFile.getSize()
                 );
-                // 파일 크기 설정
-                task.setAttachmentSize(attachmentFile.getSize());
             }
 
             Task savedTask = taskRepository.save(task);
@@ -229,9 +221,9 @@ public class TaskService {
         }
     }
 
-    // ✅ 작업 업데이트 (수정됨)
+    // ✅ 작업 업데이트 (Long 타입으로 변경)
     @Transactional
-    public Task updateTask(Integer taskId, Task updatedTask) {
+    public Task updateTask(Long taskId, Task updatedTask) {
         try {
             Optional<Task> existingTaskOpt = taskRepository.findById(taskId);
             if (existingTaskOpt.isPresent()) {
@@ -272,9 +264,9 @@ public class TaskService {
         }
     }
 
-    // ✅ 첨부파일 업데이트
+    // ✅ 첨부파일 업데이트 (Long 타입으로 변경)
     @Transactional
-    public Task updateTaskAttachment(Integer taskId, MultipartFile attachmentFile) {
+    public Task updateTaskAttachment(Long taskId, MultipartFile attachmentFile) {
         try {
             Optional<Task> taskOpt = taskRepository.findById(taskId);
             if (taskOpt.isPresent()) {
@@ -287,9 +279,9 @@ public class TaskService {
                     task.updateAttachment(
                             attachmentFile.getOriginalFilename(),
                             attachmentFile.getContentType(),
-                            base64Content
+                            base64Content,
+                            attachmentFile.getSize()
                     );
-                    task.setAttachmentSize(attachmentFile.getSize());
                 } else {
                     task.removeAttachment();
                 }
@@ -310,9 +302,9 @@ public class TaskService {
         }
     }
 
-    // ✅ 첨부파일 제거
+    // ✅ 첨부파일 제거 (Long 타입으로 변경)
     @Transactional
-    public Task removeTaskAttachment(Integer taskId) {
+    public Task removeTaskAttachment(Long taskId) {
         try {
             Optional<Task> taskOpt = taskRepository.findById(taskId);
             if (taskOpt.isPresent()) {
@@ -332,9 +324,9 @@ public class TaskService {
         }
     }
 
-    // ✅ 작업 삭제 (TaskAssignment도 함께 삭제됨 - CASCADE)
+    // ✅ 작업 삭제 (Long 타입으로 변경)
     @Transactional
-    public boolean deleteTask(Integer taskId) {
+    public boolean deleteTask(Long taskId) {
         try {
             if (taskRepository.existsById(taskId)) {
                 taskRepository.deleteById(taskId);
@@ -350,9 +342,9 @@ public class TaskService {
         }
     }
 
-    // ✅ 작업 상태 업데이트
+    // ✅ 작업 상태 업데이트 (Long 타입으로 변경)
     @Transactional
-    public Task updateTaskStatus(Integer taskId, TaskStatus newStatus) {
+    public Task updateTaskStatus(Long taskId, TaskStatus newStatus) {
         try {
             Optional<Task> taskOpt = taskRepository.findById(taskId);
             if (taskOpt.isPresent()) {
@@ -372,13 +364,13 @@ public class TaskService {
         }
     }
 
-    // ✅ 페이지네이션 (수정됨)
-    public Map<String, Object> getTasksByCreatedByAndTypeWithPagination(Long createdBy, TaskType taskType, int page, int size, String sortBy, String sortDir) {
+    // ✅ 페이지네이션 (assignedBy 사용)
+    public Map<String, Object> getTasksByCreatedByAndTypeWithPagination(Long assignedBy, TaskType taskType, int page, int size, String sortBy, String sortDir) {
         try {
             Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
             Pageable pageable = PageRequest.of(page, size, sort);
 
-            Page<Task> taskPage = taskRepository.findByCreatedByAndTaskType(createdBy, taskType, pageable);
+            Page<Task> taskPage = taskRepository.findByAssignedByAndTaskType(assignedBy, taskType, pageable);
 
             Map<String, Object> response = new HashMap<>();
             response.put("content", taskPage.getContent());
@@ -389,68 +381,12 @@ public class TaskService {
 
             return response;
         } catch (Exception e) {
-            System.err.println("Error fetching tasks by createdBy and taskType with pagination: " + e.getMessage());
+            System.err.println("Error fetching tasks by assignedBy and taskType with pagination: " + e.getMessage());
             throw new RuntimeException("Failed to fetch tasks with pagination", e);
         }
     }
 
-    // 🆕 ===== TaskAssignment 관련 메서드들 =====
-
-    // 작업에 사용자 할당
-    @Transactional
-    public TaskAssignment assignUserToTask(Integer taskId, Long userId, AssignmentRole role, Long assignedBy) {
-        try {
-            Optional<Task> taskOpt = taskRepository.findById(taskId);
-            Optional<User> userOpt = userRepository.findById(userId);
-
-            if (taskOpt.isEmpty()) {
-                throw new RuntimeException("Task not found with id: " + taskId);
-            }
-            if (userOpt.isEmpty()) {
-                throw new RuntimeException("User not found with id: " + userId);
-            }
-
-            // 이미 할당되어 있는지 확인
-            if (taskAssignmentRepository.existsByTaskTaskIdAndUserUserIdAndRole(taskId, userId, role)) {
-                throw new RuntimeException("User is already assigned to this task with the same role");
-            }
-
-            TaskAssignment assignment = new TaskAssignment();
-            assignment.setTask(taskOpt.get());
-            assignment.setUser(userOpt.get());
-            assignment.setRole(role);
-            assignment.setStatus(AssignmentStatus.ACTIVE);
-            assignment.setAssignedBy(assignedBy);
-            assignment.setAssignedAt(LocalDateTime.now());
-
-            TaskAssignment savedAssignment = taskAssignmentRepository.save(assignment);
-            System.out.println("User assigned to task successfully: " + userId + " -> " + taskId);
-            return savedAssignment;
-        } catch (Exception e) {
-            System.err.println("Error assigning user to task: " + e.getMessage());
-            throw new RuntimeException("Failed to assign user to task", e);
-        }
-    }
-
-    // 작업에서 사용자 할당 해제
-    @Transactional
-    public boolean unassignUserFromTask(Integer taskId, Long userId) {
-        try {
-            int updatedCount = taskAssignmentRepository.cancelAssignment(taskId, userId);
-            if (updatedCount > 0) {
-                System.out.println("User unassigned from task successfully: " + userId + " -> " + taskId);
-                return true;
-            } else {
-                System.out.println("No active assignment found for user: " + userId + " and task: " + taskId);
-                return false;
-            }
-        } catch (Exception e) {
-            System.err.println("Error unassigning user from task: " + e.getMessage());
-            throw new RuntimeException("Failed to unassign user from task", e);
-        }
-    }
-
-    // 내가 담당자로 할당받은 작업들
+    // ✅ 내가 담당자로 할당받은 작업들
     public List<Task> getMyAssignedTasks(Long userId) {
         try {
             return taskRepository.findMyAssignedTasks(userId);
@@ -460,27 +396,7 @@ public class TaskService {
         }
     }
 
-    // 내가 검토자로 할당받은 작업들
-    public List<Task> getMyReviewTasks(Long userId) {
-        try {
-            return taskRepository.findMyReviewTasks(userId);
-        } catch (Exception e) {
-            System.err.println("Error fetching my review tasks: " + e.getMessage());
-            throw new RuntimeException("Failed to fetch review tasks", e);
-        }
-    }
-
-    // 특정 작업의 할당자들 조회
-    public List<TaskAssignment> getTaskAssignments(Integer taskId) {
-        try {
-            return taskAssignmentRepository.findByTaskTaskIdOrderByAssignedAtAsc(taskId);
-        } catch (Exception e) {
-            System.err.println("Error fetching task assignments: " + e.getMessage());
-            throw new RuntimeException("Failed to fetch task assignments", e);
-        }
-    }
-
-    // 🆕 마감일 임박 작업들
+    // ✅ 마감일 임박 작업들 (수정된 Repository 메서드 사용)
     public List<Task> getTasksWithUpcomingDeadline(int days) {
         try {
             LocalDate deadlineDate = LocalDate.now().plusDays(days);
@@ -491,7 +407,7 @@ public class TaskService {
         }
     }
 
-    // 🆕 오늘 마감 작업들
+    // ✅ 오늘 마감 작업들 (수정된 Repository 메서드 사용)
     public List<Task> getTasksDueToday() {
         try {
             return taskRepository.findTasksDueToday(LocalDate.now());
@@ -501,7 +417,7 @@ public class TaskService {
         }
     }
 
-    // 🆕 연체된 작업들
+    // ✅ 연체된 작업들 (수정된 Repository 메서드 사용)
     public List<Task> getOverdueTasks() {
         try {
             return taskRepository.findOverdueTasks(LocalDate.now());
@@ -511,18 +427,18 @@ public class TaskService {
         }
     }
 
-    // 🆕 작업 통계
+    // ✅ 작업 통계 (수정된 Repository 메서드 사용)
     public Map<String, Object> getTaskStatistics(Long userId) {
         try {
             Map<String, Object> stats = new HashMap<>();
 
-            // 전체 활성 작업 수
+            // 전체 활성 작업 수 (수정된 메서드 사용)
             stats.put("totalActiveTasks", taskRepository.countActiveTasks());
 
             // 사용자별 할당 작업 수
             if (userId != null) {
                 stats.put("myAssignedTasks", taskRepository.countActiveAssignedTasks(userId));
-                stats.put("myCreatedTasks", taskRepository.findByCreatedByOrderByCreatedAtDesc(userId).size());
+                stats.put("myCreatedTasks", taskRepository.findByAssignedByOrderByCreatedAtDesc(userId).size());
             }
 
             // 타입별 통계
