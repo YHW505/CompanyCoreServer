@@ -11,7 +11,7 @@ public class NoticeResponse {
     private Long authorId;
     private String authorName;
     private String authorDepartment;
-    private Boolean hasAttachments; // ✨ 동적으로 계산됨
+    private boolean hasAttachment;
     private String attachmentFilename;
     private String attachmentContentType;
     private Long attachmentSize; // 🆕 파일 크기 (바이트)
@@ -27,20 +27,13 @@ public class NoticeResponse {
         this.authorId = notice.getAuthorId();
         this.authorName = notice.getAuthorName();
         this.authorDepartment = notice.getAuthorDepartment();
+        this.hasAttachment = notice.hasAttachment();
 
-        // ✅ 동적으로 첨부파일 여부 판단
-        this.hasAttachments = notice.hasAttachment();
-
-        // 첨부파일 정보 설정
         if (notice.hasAttachment()) {
             this.attachmentFilename = notice.getAttachmentFilename();
             this.attachmentContentType = notice.getAttachmentContentType();
             this.attachmentSize = notice.getAttachmentSize();
-            
-            // 🆕 첨부파일 내용을 Base64로 인코딩하여 설정
-            if (notice.getAttachmentContent() != null && !notice.getAttachmentContent().isEmpty()) {
-                this.attachmentContent = notice.getAttachmentContent(); // 이미 Base64 문자열
-            }
+            this.attachmentContent = notice.getAttachmentContent();
         }
 
         this.createdAt = notice.getCreatedAt();
@@ -49,7 +42,7 @@ public class NoticeResponse {
 
     // 모든 필드를 받는 생성자
     public NoticeResponse(Long id, String title, String content, Long authorId,
-                          String authorName, String authorDepartment, Boolean hasAttachments,
+                          String authorName, String authorDepartment, boolean hasAttachment,
                           String attachmentFilename, String attachmentContentType, Long attachmentSize,
                           String attachmentContent, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
@@ -58,7 +51,7 @@ public class NoticeResponse {
         this.authorId = authorId;
         this.authorName = authorName;
         this.authorDepartment = authorDepartment;
-        this.hasAttachments = hasAttachments;
+        this.hasAttachment = hasAttachment;
         this.attachmentFilename = attachmentFilename;
         this.attachmentContentType = attachmentContentType;
         this.attachmentSize = attachmentSize;
@@ -69,7 +62,7 @@ public class NoticeResponse {
 
     public NoticeResponse() {}
 
-    // 모든 getter/setter들 (변경 없음)
+    // 모든 getter/setter들
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -88,8 +81,8 @@ public class NoticeResponse {
     public String getAuthorDepartment() { return authorDepartment; }
     public void setAuthorDepartment(String authorDepartment) { this.authorDepartment = authorDepartment; }
 
-    public Boolean getHasAttachments() { return hasAttachments; }
-    public void setHasAttachments(Boolean hasAttachments) { this.hasAttachments = hasAttachments; }
+    public boolean hasAttachment() { return hasAttachment; }
+    public void setHasAttachment(boolean hasAttachment) { this.hasAttachment = hasAttachment; }
 
     public String getAttachmentFilename() { return attachmentFilename; }
     public void setAttachmentFilename(String attachmentFilename) { this.attachmentFilename = attachmentFilename; }
