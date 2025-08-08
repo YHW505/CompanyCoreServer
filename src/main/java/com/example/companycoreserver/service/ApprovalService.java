@@ -155,6 +155,12 @@ public class ApprovalService {
     public Approval createApproval(String title, String content, Long requesterId,
                                    String attachmentFilename, String attachmentContentType, Long attachmentSize,
                                    String attachmentContent) {
+        return createApproval(title, content, requesterId, attachmentFilename, attachmentContentType, attachmentSize, attachmentContent, false);
+    }
+
+    public Approval createApproval(String title, String content, Long requesterId,
+                                   String attachmentFilename, String attachmentContentType, Long attachmentSize,
+                                   String attachmentContent, Boolean hasAttachments) {
 
 //        log.info("결재 생성 - title: {}, requesterId: {}, approverId: {}", title, requesterId, approverId);
 
@@ -178,13 +184,22 @@ public class ApprovalService {
         // 🔄 생성자 호출 (approver null 가능)
         Approval approval = new Approval(title, content, requester, approver,
                 attachmentFilename, attachmentContentType, attachmentSize, attachmentContent);
+        
+        // hasAttachments 설정
+        if (hasAttachments != null) {
+            approval.setHasAttachments(hasAttachments);
+        }
 
         return approvalRepository.save(approval);
     }
 
     // 🆕 첨부파일 없는 결재 요청 생성 (approverId null 허용)
     public Approval createApproval(String title, String content, Long requesterId ) {
-        return createApproval(title, content, requesterId, null, null, null, null);
+        return createApproval(title, content, requesterId, null, null, null, null, false);
+    }
+    
+    public Approval createApproval(String title, String content, Long requesterId, Boolean hasAttachments ) {
+        return createApproval(title, content, requesterId, null, null, null, null, hasAttachments);
     }
 
     // ✅ 결재 승인 - approverId 설정 및 상태 변경
