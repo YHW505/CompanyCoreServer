@@ -43,7 +43,6 @@ public class NoticeService {
         Notice notice = requestDto.toEntity();
 
         // ✅ 첨부파일 처리 로직
-        boolean hasAttachmentFromRequest = false;
         if (requestDto.getAttachmentContent() != null && !requestDto.getAttachmentContent().trim().isEmpty()) {
             try {
                 byte[] fileData = java.util.Base64.getDecoder().decode(requestDto.getAttachmentContent());
@@ -53,17 +52,16 @@ public class NoticeService {
                 notice.setAttachmentContentType(requestDto.getAttachmentContentType());
                 notice.setAttachmentContent(requestDto.getAttachmentContent()); // Base64 문자열
                 notice.setAttachmentSize((long) fileData.length);
-                hasAttachmentFromRequest = true; // 요청에 첨부파일 내용이 있었음
+                notice.setHasAttachment(true); // ⭐️ 첨부파일 있음으로 설정
 
                 System.out.println("첨부파일 처리 완료: " + requestDto.getAttachmentFilename() + " (" + fileData.length + " bytes)");
             } catch (IllegalArgumentException e) {
                 System.err.println("첨부파일 Base64 디코딩 실패: " + e.getMessage());
-                hasAttachmentFromRequest = false; // 디코딩 실패 시 첨부파일 없는 것으로 간주
+                notice.setHasAttachment(false); // ⭐️ 디코딩 실패 시 false로 명시
             }
+        } else {
+            notice.setHasAttachment(false); // ⭐️ 첨부파일 없음으로 설정
         }
-        notice.setHasAttachment(hasAttachmentFromRequest); // ⭐️ 최종 hasAttachment 값 설정
-
-        System.out.println("DEBUG: save 직전 notice.hasAttachment = " + notice.hasAttachment());
 
         Notice savedNotice = noticeRepository.save(notice);
 
