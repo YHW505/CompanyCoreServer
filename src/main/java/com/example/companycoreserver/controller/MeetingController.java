@@ -1,22 +1,19 @@
 package com.example.companycoreserver.controller;
 
+import com.example.companycoreserver.dto.MeetingRequest;
 import com.example.companycoreserver.entity.Meeting;
 import com.example.companycoreserver.repository.MeetingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/meetings")
@@ -114,15 +111,102 @@ public class MeetingController {
 
     // 회의 생성
     @PostMapping
-    public ResponseEntity<Meeting> createMeeting(@RequestBody Meeting meeting) {
-        // 생성 시간 자동 설정 (Entity 생성자에서 처리되지만 명시적으로)
-        if (meeting.getCreatedAt() == null) {
-            meeting.setCreatedAt(LocalDateTime.now());
-        }
+    public ResponseEntity<Map<String, Object>> createMeeting(@RequestBody MeetingRequest request) {
+        try {
+            System.out.println("회의 생성 요청: " + request.getTitle());
 
-        Meeting savedMeeting = meetingRepository.save(meeting);
-        return ResponseEntity.status(201).body(savedMeeting); // 201 Created
+            // === 🔍 첨부파일 디버깅 정보 ===
+            System.out.println("=== 첨부파일 디버깅 정보 ===");
+            System.out.println("첨부파일명: " + request.getAttachmentFilename());
+            System.out.println("첨부파일 타입: " + request.getAttachmentContentType());
+            System.out.println("첨부파일 크기: " + request.getAttachmentSize());
+            System.out.println("hasAttachment(): " + request.hasAttachment());
+            if (request.getAttachmentContent() != null) {
+                System.out.println("첨부파일 내용 길이: " + request.getAttachmentContent().length());
+            }
+            System.out.println("================================");
+
+            // Meeting 엔티티 생성
+            Meeting meeting = new Meeting();
+            meeting.setTitle(request.getTitle());
+            meeting.setDescription(request.getDescription());
+            meeting.setStartTime(request.getStartTime());
+            meeting.setEndTime(request.getEndTime());
+            meeting.setLocation(request.getLocation());
+            meeting.setAuthor(request.getAuthor());
+            meeting.setDepartment(request.getDepartment());
+
+            // 생성 시간 자동 설정
+            if (meeting.getCreatedAt() == null) {
+                meeting.setCreatedAt(LocalDateTime.now());
+            }
+
+            // 🆕 첨부파일 처리
+            if (request.hasAttachment()) {
+                try {
+                    // Base64 디코딩으로 실제 파일 크기 확인
+                    byte[] fileData = java.util.Base64.getDecoder().decode(request.getAttachmentContent());
+
+                    // 파일 크기 제한 체크 (예: 10MB)
+                    long maxFileSize = 10 * 1024 * 1024; // 10MB
+                    if (fileData.length > maxFileSize) {
+                        Map<String, Object> errorResult = new HashMap<>();
+                        errorResult.put("success", false);
+                        errorResult.put("message", "파일 크기가 너무 큽니다. (최대 10MB)");
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResult);
+                    }
+
+                    // 첨부파일 정보 설정
+                    meeting.setAttachmentFilename(request.getAttachmentFilename());
+                    meeting.setAttachmentContentType(request.getAttachmentContentType());
+                    meeting.setAttachmentContent(request.getAttachmentContent()); // Base64 문자열 저장
+                    meeting.setAttachmentSize((long) fileData.length); // 실제 파일 크기로 설정
+
+                    System.out.println("첨부파일 처리 완료: " + request.getAttachmentFilename() +
+                            " (" + fileData.length + " bytes)");
+                } catch (Exception e) {
+                    System.err.println("첨부파일 처리 실패: " + e.getMessage());
+                    Map<String, Object> errorResult = new HashMap<>();
+                    errorResult.put("success", false);
+                    errorResult.put("message", "첨부파일 처리에 실패했습니다: " + e.getMessage());
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResult);
+                }
+            }
+
+            // 회의 저장
+            Meeting savedMeeting = meetingRepository.save(meeting);
+
+            System.out.println("회의 생성 완료: ID=" + savedMeeting.getMeetingId());
+
+            // 성공 응답
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "회의가 성공적으로 생성되었습니다.");
+            response.put("data", savedMeeting);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (Exception e) {
+            System.err.println("회의 생성 실패: " + e.getMessage());
+            e.printStackTrace();
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "회의 생성에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResult);
+        }
     }
+//    @PostMapping
+//    public ResponseEntity<Meeting> createMeeting(@RequestBody Meeting meeting) {
+//        // 생성 시간 자동 설정 (Entity 생성자에서 처리되지만 명시적으로)
+//        if (meeting.getCreatedAt() == null) {
+//            meeting.setCreatedAt(LocalDateTime.now());
+//        }
+//
+//        Meeting savedMeeting = meetingRepository.save(meeting);
+//        return ResponseEntity.status(201).body(savedMeeting); // 201 Created
+//    }
 
     // 회의 수정
     @PutMapping("/{id}")
@@ -239,15 +323,64 @@ public class MeetingController {
     }
 
 
-    // 🆕 회의록 첨부파일 다운로드
-    @GetMapping("/{id}/attachment")
-    public ResponseEntity<Meeting> downloadMeetingAttachment(@PathVariable Long id) {
-        Optional<Meeting> meeting = meetingRepository.findById(id);
-        if (meeting.isPresent()) {
-            return ResponseEntity.ok(meeting.get());
+// 🆕 회의록 첨부파일 다운로드
+@GetMapping("/{id}/attachment")
+public ResponseEntity<?> downloadMeetingAttachment(@PathVariable Long id) {
+    try {
+        System.out.println("첨부파일 다운로드 API 호출: 회의 ID=" + id);
+
+        Optional<Meeting> meetingOpt = meetingRepository.findById(id);
+
+        if (!meetingOpt.isPresent()) {
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "회의를 찾을 수 없습니다.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResult);
         }
-        return ResponseEntity.notFound().build();
+
+        Meeting meeting = meetingOpt.get();
+
+        if (meeting.getAttachmentContent() == null ||
+                meeting.getAttachmentContent().trim().isEmpty()) {
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "첨부파일이 없습니다.");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResult);
+        }
+
+        // Base64 디코딩
+        byte[] fileData = Base64.getDecoder().decode(meeting.getAttachmentContent());
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(meeting.getAttachmentContentType()));
+        headers.setContentDispositionFormData("attachment", meeting.getAttachmentFilename());
+        headers.setContentLength(fileData.length);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(fileData);
+
+    } catch (Exception e) {
+        System.err.println("첨부파일 다운로드 실패: " + e.getMessage());
+
+        Map<String, Object> errorResult = new HashMap<>();
+        errorResult.put("success", false);
+        errorResult.put("message", "첨부파일 다운로드에 실패했습니다: " + e.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResult);
     }
+}
+
+
+
+//    @GetMapping("/{id}/attachment")
+//    public ResponseEntity<Meeting> downloadMeetingAttachment(@PathVariable Long id) {
+//        Optional<Meeting> meeting = meetingRepository.findById(id);
+//        if (meeting.isPresent()) {
+//            return ResponseEntity.ok(meeting.get());
+//        }
+//        return ResponseEntity.notFound().build();
+//    }
 
     // 🆕 회의록 첨부파일 업로드
     @PutMapping("/{id}/attachment")
