@@ -28,12 +28,15 @@ public class NoticeService {
     }
 
     private NoticeResponse convertToResponse(Notice notice) {
+        System.out.println("DEBUG: convertToResponse 호출됨 (Notice ID: " + notice.getId() + ")");
+        System.out.println("DEBUG: notice.getAttachmentContent() 길이 (convertToResponse): " + (notice.getAttachmentContent() != null ? notice.getAttachmentContent().length() : "null"));
         return new NoticeResponse(notice);
     }
 
     @Transactional
     public NoticeResponse createNotice(NoticeRequest requestDto) {
         System.out.println("공지사항 생성 요청: 제목=" + requestDto.getTitle() + ", 작성자=" + requestDto.getAuthorName());
+        System.out.println("DEBUG: requestDto.getAttachmentContent() 길이: " + (requestDto.getAttachmentContent() != null ? requestDto.getAttachmentContent().length() : "null"));
 
         Notice notice = requestDto.toEntity();
 
@@ -57,6 +60,7 @@ public class NoticeService {
         notice.setHasAttachment(hasAttachmentFromRequest);
 
         System.out.println("DEBUG: save 직전 notice.hasAttachment = " + notice.hasAttachment());
+        System.out.println("DEBUG: save 직전 notice.getAttachmentContent() 길이: " + (notice.getAttachmentContent() != null ? notice.getAttachmentContent().length() : "null"));
 
         Notice savedNotice = noticeRepository.save(notice);
 
@@ -93,6 +97,7 @@ public class NoticeService {
     @Transactional
     public NoticeResponse updateNotice(Long id, NoticeRequest requestDto) {
         System.out.println("공지사항 수정 요청: ID=" + id + ", 제목=" + requestDto.getTitle());
+        System.out.println("DEBUG: requestDto.getAttachmentContent() 길이 (수정): " + (requestDto.getAttachmentContent() != null ? requestDto.getAttachmentContent().length() : "null"));
 
         Notice notice = noticeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 공지사항을 찾을 수 없습니다. ID: " + id));
@@ -118,6 +123,9 @@ public class NoticeService {
             hasAttachmentInUpdate = false;
         }
         notice.setHasAttachment(hasAttachmentInUpdate);
+
+        System.out.println("DEBUG: save 직전 notice.hasAttachment (수정) = " + notice.hasAttachment());
+        System.out.println("DEBUG: save 직전 notice.getAttachmentContent() 길이 (수정) = " + (notice.getAttachmentContent() != null ? notice.getAttachmentContent().length() : "null"));
 
         System.out.println("공지사항 수정 완료: ID=" + id);
         return convertToResponse(notice);
