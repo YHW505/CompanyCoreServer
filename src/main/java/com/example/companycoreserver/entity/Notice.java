@@ -26,9 +26,8 @@ public class Notice {
     @Column(nullable = false, length = 50)
     private String authorDepartment;
 
-    // 첨부파일 관련 필드들
-    @Column(name = "has_attachments")
-    private Boolean hasAttachments = false; // 첨부파일 존재 여부
+    @Column(name = "has_attachment")
+    private boolean hasAttachment = false;
 
     @Column(length = 255)
     private String attachmentFilename;
@@ -41,7 +40,7 @@ public class Notice {
 
     @Lob
     @Column(columnDefinition = "LONGTEXT")
-    private String attachmentContent; // Base64 인코딩된 첨부파일 내용
+    private String attachmentContent;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -49,13 +48,11 @@ public class Notice {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    // 기본 생성자
     public Notice() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }
 
-    // 생성자
     public Notice(String title, String content, Long authorId, String authorName, String authorDepartment) {
         this();
         this.title = title;
@@ -65,39 +62,21 @@ public class Notice {
         this.authorDepartment = authorDepartment;
     }
 
-    // ✅ 기본 정보 업데이트
     public void updateNotice(String title, String content) {
         this.title = title;
         this.content = content;
         this.updatedAt = LocalDateTime.now();
     }
 
-    // �� 첨부파일 메타데이터만 업데이트 (Base64 문자열 방식)
     public void updateAttachment(String filename, String contentType, String base64Content) {
-        this.hasAttachments = true;
         this.attachmentFilename = filename;
         this.attachmentContentType = contentType;
         this.attachmentContent = base64Content;
         this.updatedAt = LocalDateTime.now();
     }
 
-    // ✅ 첨부파일 여부 확인
-    public boolean hasAttachment() {
-        return this.hasAttachments != null && this.hasAttachments;
-    }
-    
-    // ✅ hasAttachments 필드 getter/setter
-    public Boolean getHasAttachments() {
-        return hasAttachments;
-    }
-    
-    public void setHasAttachments(Boolean hasAttachments) {
-        this.hasAttachments = hasAttachments;
-    }
-
-    // ✅ 첨부파일 제거
     public void removeAttachment() {
-        this.hasAttachments = false;
+        this.hasAttachment = false;
         this.attachmentFilename = null;
         this.attachmentContentType = null;
         this.attachmentContent = null;
@@ -105,98 +84,106 @@ public class Notice {
         this.updatedAt = LocalDateTime.now();
     }
 
-    // Getter 메서드들
+    // Getters and Setters
+
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getTitle() {
         return title;
     }
 
-    public String getContent() {
-        return content;
-    }
-
-    public Long getAuthorId() {
-        return authorId;
-    }
-
-    public String getAuthorName() {
-        return authorName;
-    }
-
-    public String getAuthorDepartment() {
-        return authorDepartment;
-    }
-
-    public String getAttachmentFilename() {
-        return attachmentFilename;
-    }
-
-    public String getAttachmentContentType() {
-        return attachmentContentType;
-    }
-
-    public Long getAttachmentSize() {
-        return attachmentSize;
-    }
-
-    public String getAttachmentContent() {
-        return attachmentContent;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    // Setter 메서드들
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getContent() {
+        return content;
     }
 
     public void setContent(String content) {
         this.content = content;
     }
 
+    public Long getAuthorId() {
+        return authorId;
+    }
+
     public void setAuthorId(Long authorId) {
         this.authorId = authorId;
+    }
+
+    public String getAuthorName() {
+        return authorName;
     }
 
     public void setAuthorName(String authorName) {
         this.authorName = authorName;
     }
 
+    public String getAuthorDepartment() {
+        return authorDepartment;
+    }
+
     public void setAuthorDepartment(String authorDepartment) {
         this.authorDepartment = authorDepartment;
+    }
+
+    public boolean hasAttachment() {
+        return hasAttachment;
+    }
+
+    public void setHasAttachment(boolean hasAttachment) {
+        this.hasAttachment = hasAttachment;
+    }
+
+    public String getAttachmentFilename() {
+        return attachmentFilename;
     }
 
     public void setAttachmentFilename(String attachmentFilename) {
         this.attachmentFilename = attachmentFilename;
     }
 
+    public String getAttachmentContentType() {
+        return attachmentContentType;
+    }
+
     public void setAttachmentContentType(String attachmentContentType) {
         this.attachmentContentType = attachmentContentType;
+    }
+
+    public Long getAttachmentSize() {
+        return attachmentSize;
     }
 
     public void setAttachmentSize(Long attachmentSize) {
         this.attachmentSize = attachmentSize;
     }
 
+    public String getAttachmentContent() {
+        return attachmentContent;
+    }
+
     public void setAttachmentContent(String attachmentContent) {
         this.attachmentContent = attachmentContent;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
     }
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
@@ -205,20 +192,19 @@ public class Notice {
 
     @Override
     public String toString() {
-        return "Notice{" +
-                "id=" + id +
-                ", title='" + title + '\'' +
-                ", content='" + content + '\'' +
-                ", authorId=" + authorId +
-                ", authorName='" + authorName + '\'' +
-                ", authorDepartment='" + authorDepartment + '\'' +
-                ", hasAttachments=" + hasAttachments +
-                ", attachmentFilename='" + attachmentFilename + '\'' +
-                ", attachmentContentType='" + attachmentContentType + '\'' +
-                ", attachmentSize=" + attachmentSize +
-                ", hasAttachmentFile=" + (attachmentContent != null) +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
-                '}';
+        return "Notice{"
+                + "id=" + id
+                + ", title='" + title + "'"
+                + ", content='" + content + "'"
+                + ", authorId=" + authorId
+                + ", authorName='" + authorName + "'"
+                + ", authorDepartment='" + authorDepartment + "'"
+                + ", hasAttachment=" + hasAttachment
+                + ", attachmentFilename='" + attachmentFilename + "'"
+                + ", attachmentContentType='" + attachmentContentType + "'"
+                + ", attachmentSize=" + attachmentSize
+                + ", createdAt=" + createdAt
+                + ", updatedAt=" + updatedAt
+                + "}";
     }
 }

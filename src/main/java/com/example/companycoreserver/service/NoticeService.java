@@ -61,26 +61,28 @@ public class NoticeService {
         System.out.println("공지사항 생성 요청: 제목=" + requestDto.getTitle() + ", 작성자=" + requestDto.getAuthorName());
 
         Notice notice = requestDto.toEntity();
-        
-        // 🆕 첨부파일 내용 처리 (Base64 디코딩)
+
+        // ✅ 첨부파일 처리 로직
         if (requestDto.getAttachmentContent() != null && !requestDto.getAttachmentContent().trim().isEmpty()) {
             try {
-                // Base64 디코딩
                 byte[] fileData = java.util.Base64.getDecoder().decode(requestDto.getAttachmentContent());
-                
+
                 // 첨부파일 정보 설정
                 notice.setAttachmentFilename(requestDto.getAttachmentFilename());
                 notice.setAttachmentContentType(requestDto.getAttachmentContentType());
                 notice.setAttachmentContent(requestDto.getAttachmentContent()); // Base64 문자열
                 notice.setAttachmentSize((long) fileData.length);
-                
-                System.out.println("첨부파일 처리 완료: " + requestDto.getAttachmentFilename() + " (" + fileData.length + " bytes) - Base64 내용 생략");
-            } catch (Exception e) {
+                notice.setHasAttachment(true); // ⭐️ 첨부파일 있음으로 설정
+
+                System.out.println("첨부파일 처리 완료: " + requestDto.getAttachmentFilename() + " (" + fileData.length + " bytes)");
+            } catch (IllegalArgumentException e) {
                 System.err.println("첨부파일 Base64 디코딩 실패: " + e.getMessage());
-                // 첨부파일 처리 실패 시 기본 정보만 저장
+                notice.setHasAttachment(false); // ⭐️ 디코딩 실패 시 false로 명시
             }
+        } else {
+            notice.setHasAttachment(false); // ⭐️ 첨부파일 없음으로 설정
         }
-        
+
         Notice savedNotice = noticeRepository.save(notice);
 
         System.out.println("공지사항 생성 완료: ID=" + savedNotice.getId());
@@ -118,20 +120,26 @@ public class NoticeService {
         // ✅ 기본 정보 업데이트
         notice.updateNotice(requestDto.getTitle(), requestDto.getContent());
 
-        // ✅ 첨부파일 메타데이터 업데이트 (4개 파라미터 메서드 사용)
-        if (requestDto.getAttachmentFilename() != null &&
-                !requestDto.getAttachmentFilename().trim().isEmpty()) {
-
-            System.out.println("첨부파일 메타데이터 업데이트: " + requestDto.getAttachmentFilename());
-
-            // 🔧 4개 파라미터 메서드 호출 (기존 파일 데이터와 size 유지)
-            notice.updateAttachment(
-                    requestDto.getAttachmentFilename(),
-                    requestDto.getAttachmentContentType(),
-                    requestDto.getAttachmentContent()         // Base64 문자열
-            );
-        } else {
-            System.out.println("첨부파일 정보 없음 - 기본 정보만 업데이트");
+        // ✅ 첨부파일 처리 로직
+        if (requestDto.getAttachmentContent() != null && !requestDto.getAttachmentContent().trim().isEmpty()) {
+            // 새 첨부파일이 있는 경우
+            try {
+                byte[] fileData = java.util.Base64.getDecoder().decode(requestDto.getAttachmentContent());
+                notice.updateAttachment(
+                        requestDto.getAttachmentFilename(),
+                        requestDto.getAttachmentContentType(),
+                        requestDto.getAttachmentContent()
+                );
+                notice.setAttachmentSize((long) fileData.length);
+                notice.setHasAttachment(true); // ⭐️ 첨부파일 있음으로 설정
+                System.out.println("새 첨부파일로 업데이트: " + requestDto.getAttachmentFilename());
+            } catch (IllegalArgumentException e) {
+                System.err.println("첨부파일 Base64 디코딩 실패: " + e.getMessage());
+            }
+        } else if (requestDto.getAttachmentFilename() != null && requestDto.getAttachmentFilename().trim().isEmpty()) {
+            // 첨부파일을 삭제하려는 경우 (파일 이름이 빈 문자열로 들어올 때)
+            notice.removeAttachment(); // ⭐️ 첨부파일 제거 메소드 사용
+            System.out.println("첨부파일 삭제됨");
         }
 
         System.out.println("공지사항 수정 완료: ID=" + id);
