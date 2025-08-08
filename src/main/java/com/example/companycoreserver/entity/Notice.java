@@ -27,7 +27,7 @@ public class Notice {
     private String authorDepartment;
 
     @Column(name = "has_attachment")
-    private boolean hasAttachment = false;
+    private Boolean hasAttachment = false; // Boolean 래퍼 타입으로 변경
 
     @Column(length = 255)
     private String attachmentFilename;
@@ -134,12 +134,17 @@ public class Notice {
         this.authorDepartment = authorDepartment;
     }
 
-    public boolean hasAttachment() {
+    public Boolean getHasAttachment() {
         return hasAttachment;
     }
 
-    public void setHasAttachment(boolean hasAttachment) {
+    public void setHasAttachment(Boolean hasAttachment) {
         this.hasAttachment = hasAttachment;
+    }
+
+    // hasAttachment() 메소드도 null 체크를 포함하도록 수정
+    public boolean hasAttachment() {
+        return this.hasAttachment != null && this.hasAttachment;
     }
 
     public String getAttachmentFilename() {
@@ -190,21 +195,22 @@ public class Notice {
         this.updatedAt = updatedAt;
     }
 
+    // toString() 메소드는 가장 기본적인 형태로 작성
     @Override
     public String toString() {
-        return "Notice{"
-                + "id=" + id
-                + ", title='" + title + "'"
-                + ", content='" + content + "'"
-                + ", authorId=" + authorId
-                + ", authorName='" + authorName + "'"
-                + ", authorDepartment='" + authorDepartment + "'"
-                + ", hasAttachment=" + hasAttachment
-                + ", attachmentFilename='" + attachmentFilename + "'"
-                + ", attachmentContentType='" + attachmentContentType + "'"
-                + ", attachmentSize=" + attachmentSize
-                + ", createdAt=" + createdAt
-                + ", updatedAt=" + updatedAt
+        return "Notice{" +
+                "id=" + id + ", " +
+                "title='" + title + "'" + ", " +
+                "content='" + content + "'" + ", " +
+                "authorId=" + authorId + ", " +
+                "authorName='" + authorName + "'" + ", " +
+                "authorDepartment='" + authorDepartment + "'" + ", " +
+                "hasAttachment=" + hasAttachment + ", " +
+                "attachmentFilename='" + attachmentFilename + "'" + ", " +
+                "attachmentContentType='" + attachmentContentType + "'" + ", " +
+                "attachmentSize=" + attachmentSize + ", " +
+                "createdAt=" + createdAt + ", " +
+                "updatedAt=" + updatedAt
                 + "}";
     }
 }
