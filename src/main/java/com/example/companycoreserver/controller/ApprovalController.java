@@ -253,6 +253,13 @@ public class ApprovalController {
             String attachmentContentType = (String) request.get("attachmentContentType");
             String attachmentContent = (String) request.get("attachmentContent");
             Long attachmentSize = null;
+            
+            // hasAttachments 필드 추출
+            Boolean hasAttachments = false;
+            Object hasAttachmentsObj = request.get("hasAttachments");
+            if (hasAttachmentsObj != null) {
+                hasAttachments = Boolean.valueOf(hasAttachmentsObj.toString());
+            }
 
             // attachmentSize 안전한 변환
             Object attachmentSizeObj = request.get("attachmentSize");
@@ -272,10 +279,10 @@ public class ApprovalController {
             if (attachmentFilename != null && !attachmentFilename.trim().isEmpty()) {
                 // 첨부파일 있는 경우
                 approval = approvalService.createApproval(title, content, requesterId,
-                        attachmentFilename, attachmentContentType, attachmentSize, attachmentContent);
+                        attachmentFilename, attachmentContentType, attachmentSize, attachmentContent, hasAttachments);
             } else {
                 // 첨부파일 없는 경우
-                approval = approvalService.createApproval(title, content, requesterId);
+                approval = approvalService.createApproval(title, content, requesterId, hasAttachments);
             }
 
             // Entity → DTO 변환
