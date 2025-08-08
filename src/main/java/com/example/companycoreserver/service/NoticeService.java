@@ -75,7 +75,19 @@ public class NoticeService {
     public Page<NoticeResponse> getAllNotices(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<Notice> noticePage = noticeRepository.findAll(pageable);
-        return noticePage.map(this::convertToResponse);
+        
+        // 변환 중 오류를 잡기 위한 로직 추가
+        return noticePage.map(notice -> {
+            try {
+                return convertToResponse(notice);
+            } catch (Exception e) {
+                System.err.println("❌ Notice 엔티티를 NoticeResponse DTO로 변환 중 오류 발생: " + e.getMessage());
+                e.printStackTrace();
+                // 오류가 발생한 항목은 건너뛰거나, null을 반환하여 필터링할 수 있습니다.
+                // 여기서는 null을 반환하고, 이후 스트림에서 null을 필터링합니다.
+                return null;
+            }
+        }).filter(response -> response != null); // null이 아닌 항목만 필터링
     }
 
     /**
