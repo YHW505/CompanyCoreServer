@@ -28,6 +28,7 @@ public class User {
     private String username;
 
     @Column(name = "join_date")
+    @JsonFormat(shape = JsonFormat.Shape.ARRAY) // 배열 형식으로 파싱
     private LocalDate joinDate;
 
     @Column(name = "password", length = 255, nullable = false)
@@ -50,6 +51,7 @@ public class User {
     private Integer isActive;
 
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+    @JsonFormat(shape = JsonFormat.Shape.ARRAY) // 배열 형식으로 파싱
     private LocalDateTime createdAt;
 
     @Column(name = "email", length = 255, unique = true, nullable = false)
