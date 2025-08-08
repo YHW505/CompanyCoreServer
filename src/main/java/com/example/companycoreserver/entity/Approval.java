@@ -43,6 +43,9 @@ public class Approval {
     private LocalDateTime processedDate; // 처리일 (승인/거부 날짜)
 
     // 첨부파일 관련 필드들
+    @Column(name = "has_attachments")
+    private Boolean hasAttachments = false; // 첨부파일 존재 여부
+
     @Column(length = 255)
     private String attachmentFilename;
 
@@ -95,6 +98,7 @@ public class Approval {
         this.attachmentFilename = attachmentFilename;
         this.attachmentContentType = attachmentContentType;
         this.attachmentSize = attachmentSize;
+        this.hasAttachments = true;
         this.status = ApprovalStatus.PENDING;
         this.requestDate = LocalDateTime.now();
     }
@@ -111,12 +115,14 @@ public class Approval {
         this.attachmentContentType = attachmentContentType;
         this.attachmentSize = attachmentSize;
         this.attachmentContent = attachmentContent;
+        this.hasAttachments = true;
         this.status = ApprovalStatus.PENDING;
         this.requestDate = LocalDateTime.now();
     }
 
     // 🆕 첨부파일 메타데이터만 업데이트 (Base64 문자열 방식)
     public void updateAttachment(String filename, String contentType, String base64Content) {
+        this.hasAttachments = true;
         this.attachmentFilename = filename;
         this.attachmentContentType = contentType;
         this.attachmentContent = base64Content;
@@ -125,6 +131,7 @@ public class Approval {
 
     // ✅ 첨부파일 제거
     public void removeAttachment() {
+        this.hasAttachments = false;
         this.attachmentFilename = null;
         this.attachmentContentType = null;
         this.attachmentSize = null;
@@ -251,6 +258,20 @@ public class Approval {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    // hasAttachments getter/setter
+    public Boolean getHasAttachments() {
+        return hasAttachments;
+    }
+
+    public void setHasAttachments(Boolean hasAttachments) {
+        this.hasAttachments = hasAttachments;
+    }
+
+    // 첨부파일 존재 여부 확인 메서드
+    public boolean hasAttachments() {
+        return hasAttachments != null && hasAttachments;
     }
 
     // 편의 메서드

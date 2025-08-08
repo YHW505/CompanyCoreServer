@@ -76,6 +76,6 @@ public interface ApprovalRepository extends JpaRepository<Approval, Long> {
     Page<Approval> findPendingApprovalsByApproverId(@Param("userId") Long userId, Pageable pageable);
     
     // 🆕 부서 정보를 포함하여 결재 조회 (권한 검증용)
-    @Query("SELECT a FROM Approval a JOIN FETCH a.requester r JOIN FETCH r.department WHERE a.approvalId = :approvalId")
+    @Query("SELECT a FROM Approval a JOIN FETCH a.requester r JOIN FETCH r.department WHERE a.id = :approvalId")
     Approval findByIdWithRequesterDepartment(@Param("approvalId") Long approvalId);
 }
