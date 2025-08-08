@@ -27,6 +27,9 @@ public class Notice {
     private String authorDepartment;
 
     // 첨부파일 관련 필드들
+    @Column(name = "has_attachments")
+    private Boolean hasAttachments = false; // 첨부파일 존재 여부
+
     @Column(length = 255)
     private String attachmentFilename;
 
@@ -71,6 +74,7 @@ public class Notice {
 
     // �� 첨부파일 메타데이터만 업데이트 (Base64 문자열 방식)
     public void updateAttachment(String filename, String contentType, String base64Content) {
+        this.hasAttachments = true;
         this.attachmentFilename = filename;
         this.attachmentContentType = contentType;
         this.attachmentContent = base64Content;
@@ -79,11 +83,21 @@ public class Notice {
 
     // ✅ 첨부파일 여부 확인
     public boolean hasAttachment() {
-        return this.attachmentFilename != null && !this.attachmentFilename.trim().isEmpty();
+        return this.hasAttachments != null && this.hasAttachments;
+    }
+    
+    // ✅ hasAttachments 필드 getter/setter
+    public Boolean getHasAttachments() {
+        return hasAttachments;
+    }
+    
+    public void setHasAttachments(Boolean hasAttachments) {
+        this.hasAttachments = hasAttachments;
     }
 
     // ✅ 첨부파일 제거
     public void removeAttachment() {
+        this.hasAttachments = false;
         this.attachmentFilename = null;
         this.attachmentContentType = null;
         this.attachmentContent = null;
@@ -198,6 +212,7 @@ public class Notice {
                 ", authorId=" + authorId +
                 ", authorName='" + authorName + '\'' +
                 ", authorDepartment='" + authorDepartment + '\'' +
+                ", hasAttachments=" + hasAttachments +
                 ", attachmentFilename='" + attachmentFilename + '\'' +
                 ", attachmentContentType='" + attachmentContentType + '\'' +
                 ", attachmentSize=" + attachmentSize +

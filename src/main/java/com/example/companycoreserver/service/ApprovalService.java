@@ -158,8 +158,15 @@ public class ApprovalService {
 
 //        log.info("결재 생성 - title: {}, requesterId: {}, approverId: {}", title, requesterId, approverId);
 
+        // 요청자 정보 조회 (부서 정보 포함)
         User requester = userRepository.findById(requesterId)
                 .orElseThrow(() -> new RuntimeException("요청자를 찾을 수 없습니다."));
+        
+        // 요청자의 부서 정보 확인
+        if (requester.getDepartment() == null) {
+            System.err.println("요청자의 부서 정보가 없습니다: " + requester.getUsername());
+            throw new RuntimeException("요청자의 부서 정보가 없습니다.");
+        }
 
         // ✅ approverId가 null이면 approver도 null로 설정
         User approver = null;
@@ -378,21 +385,25 @@ public class ApprovalService {
     // ✅ 부서별 권한 검증 메서드
     public boolean validateDepartmentPermission(Long approvalId, Long approverId) {
         try {
-            // 결재 정보 조회
-            Approval approval = approvalRepository.findById(approvalId)
-                    .orElseThrow(() -> new RuntimeException("결재 요청을 찾을 수 없습니다."));
+            // 결재 정보 조회 (부서 정보 포함)
+            Approval approval = approvalRepository.findByIdWithRequesterDepartment(approvalId);
+            if (approval == null) {
+                throw new RuntimeException("결재 요청을 찾을 수 없습니다.");
+            }
             
-            // 승인자 정보 조회
+            // 승인자 정보 조회 (부서 정보 포함)
             User approver = userRepository.findById(approverId)
                     .orElseThrow(() -> new RuntimeException("승인자를 찾을 수 없습니다."));
             
-            // 요청자 정보 조회
+            // 요청자 정보 (이미 JOIN FETCH로 로드됨)
             User requester = approval.getRequester();
             
             // 부서 정보 확인
             if (requester.getDepartment() == null || approver.getDepartment() == null) {
                 System.err.println("부서 정보가 없습니다. 요청자: " + requester.getUsername() + 
-                                 ", 승인자: " + approver.getUsername());
+                                 " (부서: " + (requester.getDepartment() != null ? requester.getDepartment().getDepartmentName() : "null") + ")" +
+                                 ", 승인자: " + approver.getUsername() + 
+                                 " (부서: " + (approver.getDepartment() != null ? approver.getDepartment().getDepartmentName() : "null") + ")");
                 return false;
             }
             

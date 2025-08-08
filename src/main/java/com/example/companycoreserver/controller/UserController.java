@@ -108,6 +108,34 @@ public class UserController {
             return ResponseEntity.status(500).build();
         }
     }
+    
+    // 🆕 사용자 부서 정보 디버깅용
+    @GetMapping("/debug/department-info")
+    public ResponseEntity<String> getDepartmentInfo(
+            @RequestHeader("Authorization") String token) {
+        try {
+            if (!isValidToken(token)) {
+                return ResponseEntity.status(401).build();
+            }
+
+            List<User> allUsers = userService.getAllUsers();
+            StringBuilder result = new StringBuilder();
+            result.append("=== 사용자 부서 정보 ===\n");
+            
+            for (User user : allUsers) {
+                String departmentInfo = user.getDepartment() != null ? 
+                    user.getDepartment().getDepartmentName() : "null";
+                result.append(String.format("사용자: %s (ID: %d), 부서: %s\n", 
+                    user.getUsername(), user.getUserId(), departmentInfo));
+            }
+            
+            return ResponseEntity.ok(result.toString());
+
+        } catch (Exception e) {
+            System.err.println("Error in getDepartmentInfo: " + e.getMessage());
+            return ResponseEntity.status(500).body("오류: " + e.getMessage());
+        }
+    }
 
     // 🔍 이메일로 사용자 조회
     @GetMapping("/email/{email}")
