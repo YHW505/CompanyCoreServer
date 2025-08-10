@@ -1,6 +1,7 @@
 package com.example.companycoreserver.dto;
 
 import com.example.companycoreserver.entity.Enum.ApprovalStatus;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.time.LocalDateTime;
 
@@ -17,7 +18,10 @@ public class ApprovalResponse {
     private String attachmentFilename;
     private String attachmentContentType;
     private Long attachmentSize;
+
+    @JsonIgnore
     private String attachmentContent; // Base64 인코딩된 첨부파일 내용
+
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 

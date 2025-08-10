@@ -11,6 +11,9 @@ server:
     context-path: /api
   codec:
     max-in-memory-size: 50MB
+    tomcat:
+      max-http-post-size: 50MB
+      max-swallow-size: 50MB
 
   jpa:
     hibernate:
