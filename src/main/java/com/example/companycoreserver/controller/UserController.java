@@ -222,16 +222,16 @@ public class UserController {
     }
 
     // 🔍 부서별 사용자 조회
-    @GetMapping("/department/{department}")
+    @GetMapping("/department/{departmentId}")
     public ResponseEntity<List<User>> getUsersByDepartment(
             @RequestHeader("Authorization") String token,
-            @PathVariable String department) {
+            @PathVariable Integer departmentId) {
         try {
             if (!isValidToken(token)) {
                 return ResponseEntity.status(401).build();
             }
 
-            List<User> users = userService.getUsersByDepartment(department);
+            List<User> users = userService.getUsersByDepartmentId(departmentId);
             return ResponseEntity.ok(users);
 
         } catch (Exception e) {
