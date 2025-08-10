@@ -1,0 +1,706 @@
+package com.example.companycoreserver.controller;
+
+import com.example.companycoreserver.dto.NoticeRequest;
+import com.example.companycoreserver.dto.NoticeResponse;
+import com.example.companycoreserver.service.NoticeService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import org.springframework.http.HttpHeaders;
+
+@RestController
+@RequestMapping("/api/notices")
+@CrossOrigin(origins = "*")
+public class NoticeController {
+
+    private final NoticeService noticeService;
+
+    @Autowired
+    public NoticeController(NoticeService noticeService) {
+        this.noticeService = noticeService;
+    }
+
+    /**
+     * ✅ 공지사항 생성
+     * POST /api/notices
+     */
+    @PostMapping
+    public ResponseEntity<Map<String, Object>> createNotice(@RequestBody NoticeRequest requestDto) {
+        try {
+            System.out.println("공지사항 생성 API 호출: " + requestDto.getTitle());
+
+            NoticeResponse response = noticeService.createNotice(requestDto);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "공지사항이 성공적으로 생성되었습니다.");
+            result.put("data", response);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(result);
+
+        } catch (Exception e) {
+            System.err.println("공지사항 생성 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "공지사항 생성에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResult);
+        }
+    }
+
+    /**
+     * ✅ 공지사항 전체 조회 (페이징)
+     * GET /api/notices?page=0&size=10
+     */
+    @GetMapping
+    public ResponseEntity<Map<String, Object>> getAllNotices(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "false") boolean simple) {
+        try {
+            System.out.println("공지사항 전체 조회 API 호출: page=" + page + ", size=" + size);
+
+            Page<NoticeResponse> noticePage = noticeService.getAllNotices(page, size);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "공지사항 목록을 성공적으로 조회했습니다.");
+            result.put("data", noticePage.getContent());
+            result.put("totalElements", noticePage.getTotalElements());
+            result.put("totalPages", noticePage.getTotalPages());
+            result.put("currentPage", page);
+            result.put("size", size);
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("공지사항 조회 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "공지사항 조회에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
+
+    /**
+     * ✅ 공지사항 단건 조회
+     * GET /api/notices/{id}
+     */
+    @GetMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> getNoticeById(@PathVariable Long id) {
+        try {
+            System.out.println("공지사항 단건 조회 API 호출: ID=" + id);
+
+            NoticeResponse response = noticeService.getNoticeById(id);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "공지사항을 성공적으로 조회했습니다.");
+            result.put("data", response);
+
+            return ResponseEntity.ok(result);
+
+        } catch (IllegalArgumentException e) {
+            System.err.println("공지사항 조회 실패 - 존재하지 않음: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResult);
+
+        } catch (Exception e) {
+            System.err.println("공지사항 조회 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "공지사항 조회에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
+
+    /**
+     * 🆕 간단한 공지사항 목록 조회 (첨부파일 제외)
+     * GET /api/notices/simple
+     */
+    @GetMapping("/simple")
+    public ResponseEntity<Map<String, Object>> getNoticesSimple(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            System.out.println("간단한 공지사항 목록 조회 API 호출: page=" + page + ", size=" + size);
+
+            Page<NoticeResponse> noticePage = noticeService.getAllNotices(page, size);
+            List<Map<String, Object>> simpleNotices = new ArrayList<>();
+
+            for (NoticeResponse notice : noticePage.getContent()) {
+                Map<String, Object> simpleNotice = new HashMap<>();
+                simpleNotice.put("id", notice.getId());
+                simpleNotice.put("title", notice.getTitle());
+                simpleNotice.put("content", notice.getContent());
+                simpleNotice.put("authorDepartment", notice.getAuthorDepartment());
+                simpleNotice.put("authorName", notice.getAuthorName());
+                simpleNotice.put("createdAt", notice.getCreatedAt());
+                simpleNotice.put("updatedAt", notice.getUpdatedAt());
+//                simpleNotice.put("isImportant", notice.getIsImportant());
+                // 첨부파일 정보는 제외 (상세보기에서만 확인)
+
+                simpleNotices.add(simpleNotice);
+            }
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "간단한 공지사항 목록을 성공적으로 조회했습니다.");
+            result.put("data", simpleNotices);
+            result.put("totalElements", noticePage.getTotalElements());
+            result.put("totalPages", noticePage.getTotalPages());
+            result.put("currentPage", page);
+            result.put("size", size);
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("간단한 공지사항 조회 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "간단한 공지사항 조회에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
+
+    /**
+     * ✅ 공지사항 수정
+     * PUT /api/notices/{id}
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> updateNotice(
+            @PathVariable Long id,
+            @RequestBody NoticeRequest requestDto) {
+        try {
+            System.out.println("공지사항 수정 API 호출: ID=" + id + ", 제목=" + requestDto.getTitle());
+
+            NoticeResponse response = noticeService.updateNotice(id, requestDto);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "공지사항이 성공적으로 수정되었습니다.");
+            result.put("data", response);
+
+            return ResponseEntity.ok(result);
+
+        } catch (IllegalArgumentException e) {
+            System.err.println("공지사항 수정 실패 - 존재하지 않음: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResult);
+
+        } catch (Exception e) {
+            System.err.println("공지사항 수정 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "공지사항 수정에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResult);
+        }
+    }
+
+    /**
+     * ✅ 공지사항 삭제
+     * DELETE /api/notices/{id}
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, Object>> deleteNotice(@PathVariable Long id) {
+        try {
+            System.out.println("공지사항 삭제 API 호출: ID=" + id);
+
+            noticeService.deleteNotice(id);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "공지사항이 성공적으로 삭제되었습니다.");
+
+            return ResponseEntity.ok(result);
+
+        } catch (IllegalArgumentException e) {
+            System.err.println("공지사항 삭제 실패 - 존재하지 않음: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResult);
+
+        } catch (Exception e) {
+            System.err.println("공지사항 삭제 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "공지사항 삭제에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
+
+    /**
+     * 🔧 첨부파일 업로드 (개선된 버전)
+     * POST /api/notices/{id}/attachment
+     */
+    @PostMapping(value = "/{id}/attachment", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, Object>> uploadAttachment(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            System.out.println("첨부파일 업로드 API 호출: 공지사항 ID=" + id + ", 파일명=" + file.getOriginalFilename());
+
+            // 파일 크기 검증 (50MB 제한)
+            if (file.getSize() > 50 * 1024 * 1024) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "파일 크기는 50MB를 초과할 수 없습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResult);
+            }
+
+            if (file.isEmpty()) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "업로드할 파일이 없습니다.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResult);
+            }
+
+            // 파일 타입 검증
+            String contentType = file.getContentType();
+            if (contentType == null) {
+                contentType = "application/octet-stream";
+            }
+
+            // 허용된 파일 타입 검증
+            if (!isAllowedFileType(contentType)) {
+                Map<String, Object> errorResult = new HashMap<>();
+                errorResult.put("success", false);
+                errorResult.put("message", "지원하지 않는 파일 타입입니다. 지원 형식: PDF, Word, Excel, 이미지, 텍스트 파일");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorResult);
+            }
+
+            String filename = file.getOriginalFilename();
+            // 파일명이 null이거나 비어있을 경우 기본 파일명 생성
+            if (filename == null || filename.trim().isEmpty()) {
+                String extension = getExtensionFromContentType(contentType);
+                filename = "첨부파일_" + System.currentTimeMillis() + extension;
+            }
+
+            // 파일명에서 특수문자 제거 및 길이 제한
+            filename = sanitizeFilename(filename);
+            
+            byte[] fileData = file.getBytes();
+
+            NoticeResponse response = noticeService.uploadAttachment(id, filename, contentType, fileData);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "첨부파일이 성공적으로 업로드되었습니다.");
+            result.put("data", response);
+
+            return ResponseEntity.ok(result);
+
+        } catch (IllegalArgumentException e) {
+            System.err.println("첨부파일 업로드 실패 - 공지사항 없음: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResult);
+
+        } catch (Exception e) {
+            System.err.println("첨부파일 업로드 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "첨부파일 업로드에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
+
+    /**
+     * 허용된 파일 타입인지 검증
+     */
+    private boolean isAllowedFileType(String contentType) {
+        if (contentType == null) return false;
+        
+        String lowerContentType = contentType.toLowerCase();
+        return lowerContentType.contains("pdf") ||
+               lowerContentType.contains("word") ||
+               lowerContentType.contains("excel") ||
+               lowerContentType.contains("image") ||
+               lowerContentType.contains("text") ||
+               lowerContentType.contains("powerpoint") ||
+               lowerContentType.contains("zip") ||
+               lowerContentType.contains("rar");
+    }
+
+    /**
+     * Content-Type에서 확장자 추출
+     */
+    private String getExtensionFromContentType(String contentType) {
+        if (contentType == null) return ".file";
+        
+        String lowerContentType = contentType.toLowerCase();
+        if (lowerContentType.contains("pdf")) return ".pdf";
+        if (lowerContentType.contains("word")) return ".docx";
+        if (lowerContentType.contains("excel")) return ".xlsx";
+        if (lowerContentType.contains("powerpoint")) return ".pptx";
+        if (lowerContentType.contains("image")) {
+            if (lowerContentType.contains("jpeg")) return ".jpg";
+            if (lowerContentType.contains("png")) return ".png";
+            if (lowerContentType.contains("gif")) return ".gif";
+            return ".jpg";
+        }
+        if (lowerContentType.contains("text")) return ".txt";
+        if (lowerContentType.contains("zip")) return ".zip";
+        if (lowerContentType.contains("rar")) return ".rar";
+        
+        return ".file";
+    }
+
+    /**
+     * 파일명 정리 (특수문자 제거, 길이 제한)
+     */
+    private String sanitizeFilename(String filename) {
+        if (filename == null) return "file";
+        
+        // 특수문자 제거 (한글, 영문, 숫자, 점, 하이픈, 언더스코어만 허용)
+        String sanitized = filename.replaceAll("[^a-zA-Z0-9가-힣._-]", "");
+        
+        // 길이 제한 (100자)
+        if (sanitized.length() > 100) {
+            int lastDotIndex = sanitized.lastIndexOf('.');
+            if (lastDotIndex > 0) {
+                String name = sanitized.substring(0, lastDotIndex);
+                String extension = sanitized.substring(lastDotIndex);
+                if (name.length() > 90) {
+                    name = name.substring(0, 90);
+                }
+                sanitized = name + extension;
+            } else {
+                sanitized = sanitized.substring(0, 100);
+            }
+        }
+        
+        return sanitized;
+    }
+
+    /**
+     * ✅ 제목으로 검색
+     * GET /api/notices/search/title?title=검색어&page=0&size=10
+     */
+    @GetMapping("/search/title")
+    public ResponseEntity<Map<String, Object>> searchByTitle(
+            @RequestParam String title,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            System.out.println("제목 검색 API 호출: title=" + title + ", page=" + page + ", size=" + size);
+
+            Page<NoticeResponse> noticePage = noticeService.searchByTitle(title, page, size);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "제목 검색이 완료되었습니다.");
+            result.put("data", noticePage.getContent());
+            result.put("totalElements", noticePage.getTotalElements());
+            result.put("totalPages", noticePage.getTotalPages());
+            result.put("currentPage", page);
+            result.put("size", size);
+            result.put("searchKeyword", title);
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("제목 검색 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "제목 검색에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
+
+    /**
+     * ✅ 작성자로 검색
+     * GET /api/notices/search/author?authorName=작성자&page=0&size=10
+     */
+    @GetMapping("/search/author")
+    public ResponseEntity<Map<String, Object>> searchByAuthor(
+            @RequestParam String authorName,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            System.out.println("작성자 검색 API 호출: authorName=" + authorName + ", page=" + page + ", size=" + size);
+
+            Page<NoticeResponse> noticePage = noticeService.searchByAuthor(authorName, page, size);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "작성자 검색이 완료되었습니다.");
+            result.put("data", noticePage.getContent());
+            result.put("totalElements", noticePage.getTotalElements());
+            result.put("totalPages", noticePage.getTotalPages());
+            result.put("currentPage", page);
+            result.put("size", size);
+            result.put("searchAuthor", authorName);
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("작성자 검색 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "작성자 검색에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
+
+    /**
+     * ✅ 키워드로 검색 (제목 + 내용)
+     * GET /api/notices/search/keyword?keyword=검색어&page=0&size=10
+     */
+    @GetMapping("/search/keyword")
+    public ResponseEntity<Map<String, Object>> searchByKeyword(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            System.out.println("키워드 검색 API 호출: keyword=" + keyword + ", page=" + page + ", size=" + size);
+
+            Page<NoticeResponse> noticePage = noticeService.searchByKeyword(keyword, page, size);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "키워드 검색이 완료되었습니다.");
+            result.put("data", noticePage.getContent());
+            result.put("totalElements", noticePage.getTotalElements());
+            result.put("totalPages", noticePage.getTotalPages());
+            result.put("currentPage", page);
+            result.put("size", size);
+            result.put("searchKeyword", keyword);
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("키워드 검색 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "키워드 검색에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
+
+    /**
+     * ✅ 키워드 + 첨부파일 여부로 복합 검색
+     * GET /api/notices/search/complex?keyword=검색어&hasAttachment=true&page=0&size=10
+     */
+    @GetMapping("/search/complex")
+    public ResponseEntity<Map<String, Object>> searchByKeywordAndAttachment(
+            @RequestParam String keyword,
+            @RequestParam boolean hasAttachment,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            System.out.println("복합 검색 API 호출: keyword=" + keyword + ", hasAttachment=" + hasAttachment + ", page=" + page + ", size=" + size);
+
+            Page<NoticeResponse> noticePage = noticeService.searchByKeywordAndAttachment(keyword, hasAttachment, page, size);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "복합 검색이 완료되었습니다.");
+            result.put("data", noticePage.getContent());
+            result.put("totalElements", noticePage.getTotalElements());
+            result.put("totalPages", noticePage.getTotalPages());
+            result.put("currentPage", page);
+            result.put("size", size);
+            result.put("searchKeyword", keyword);
+            result.put("hasAttachment", hasAttachment);
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("복합 검색 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "복합 검색에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
+
+    /**
+     * ✅ 최근 공지사항 5개
+     * GET /api/notices/recent
+     */
+    @GetMapping("/recent")
+    public ResponseEntity<Map<String, Object>> getRecentNotices() {
+        try {
+            System.out.println("최근 공지사항 조회 API 호출");
+
+            List<NoticeResponse> notices = noticeService.getRecentNotices();
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "최근 공지사항을 성공적으로 조회했습니다.");
+            result.put("data", notices);
+            result.put("count", notices.size());
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("최근 공지사항 조회 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "최근 공지사항 조회에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
+
+    /**
+     * ✅ 작성자 ID로 공지사항 조회
+     * GET /api/notices/author/{authorId}?page=0&size=10
+     */
+    @GetMapping("/author/{authorId}")
+    public ResponseEntity<Map<String, Object>> getNoticesByAuthorId(
+            @PathVariable Long authorId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            System.out.println("작성자 ID별 공지사항 조회 API 호출: authorId=" + authorId + ", page=" + page + ", size=" + size);
+
+            Page<NoticeResponse> noticePage = noticeService.getNoticesByAuthorId(authorId, page, size);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "작성자별 공지사항을 성공적으로 조회했습니다.");
+            result.put("data", noticePage.getContent());
+            result.put("totalElements", noticePage.getTotalElements());
+            result.put("totalPages", noticePage.getTotalPages());
+            result.put("currentPage", page);
+            result.put("size", size);
+            result.put("authorId", authorId);
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("작성자 ID별 공지사항 조회 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "작성자별 공지사항 조회에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
+
+    /**
+     * ✅ 부서별 공지사항 조회
+     * GET /api/notices/department/{department}?page=0&size=10
+     */
+    @GetMapping("/department/{department}")
+    public ResponseEntity<Map<String, Object>> getNoticesByDepartment(
+            @PathVariable String department,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            System.out.println("부서별 공지사항 조회 API 호출: department=" + department + ", page=" + page + ", size=" + size);
+
+            Page<NoticeResponse> noticePage = noticeService.getNoticesByDepartment(department, page, size);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "부서별 공지사항을 성공적으로 조회했습니다.");
+            result.put("data", noticePage.getContent());
+            result.put("totalElements", noticePage.getTotalElements());
+            result.put("totalPages", noticePage.getTotalPages());
+            result.put("currentPage", page);
+            result.put("size", size);
+            result.put("department", department);
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("부서별 공지사항 조회 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "부서별 공지사항 조회에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
+
+    /**
+     * ✅ 날짜 범위로 공지사항 조회
+     * GET /api/notices/date-range?startDate=2024-01-01T00:00:00&endDate=2024-12-31T23:59:59&page=0&size=10
+     */
+    @GetMapping("/date-range")
+    public ResponseEntity<Map<String, Object>> getNoticesByDateRange(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        try {
+            System.out.println("날짜 범위별 공지사항 조회 API 호출: startDate=" + startDate + ", endDate=" + endDate + ", page=" + page + ", size=" + size);
+
+            Page<NoticeResponse> noticePage = noticeService.getNoticesByDateRange(startDate, endDate, page, size);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "날짜 범위별 공지사항을 성공적으로 조회했습니다.");
+            result.put("data", noticePage.getContent());
+            result.put("totalElements", noticePage.getTotalElements());
+            result.put("totalPages", noticePage.getTotalPages());
+            result.put("currentPage", page);
+            result.put("size", size);
+            result.put("startDate", startDate);
+            result.put("endDate", endDate);
+
+            return ResponseEntity.ok(result);
+
+        } catch (Exception e) {
+            System.err.println("날짜 범위별 공지사항 조회 실패: " + e.getMessage());
+
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "날짜 범위별 공지사항 조회에 실패했습니다: " + e.getMessage());
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
+}
