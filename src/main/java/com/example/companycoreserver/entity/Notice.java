@@ -143,9 +143,9 @@ public class Notice {
     }
 
     // hasAttachment() 메소드도 null 체크를 포함하도록 수정
-    public boolean hasAttachment() {
-        return this.hasAttachment != null && this.hasAttachment;
-    }
+//    public boolean hasAttachment() {
+//        return this.hasAttachment != null && this.hasAttachment;
+//    }
 
     public String getAttachmentFilename() {
         return attachmentFilename;

@@ -56,7 +56,7 @@ public class NoticeService {
         }
         notice.setHasAttachment(hasAttachmentFromRequest);
 
-        System.out.println("DEBUG: save 직전 notice.hasAttachment = " + notice.hasAttachment());
+        System.out.println("DEBUG: save 직전 notice.hasAttachment = " + notice.getHasAttachment());
 
         Notice savedNotice = noticeRepository.save(notice);
 
@@ -125,7 +125,7 @@ public class NoticeService {
 
         notice.updateNotice(requestDto.getTitle(), requestDto.getContent());
 
-        Boolean hasAttachmentInUpdate = notice.hasAttachment();
+        Boolean hasAttachmentInUpdate = notice.getHasAttachment();
         if (requestDto.getAttachmentContent() != null && !requestDto.getAttachmentContent().trim().isEmpty()) {
             try {
                 byte[] fileData = java.util.Base64.getDecoder().decode(requestDto.getAttachmentContent());

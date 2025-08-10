@@ -27,9 +27,9 @@ public class NoticeResponse {
         this.authorId = notice.getAuthorId();
         this.authorName = notice.getAuthorName();
         this.authorDepartment = notice.getAuthorDepartment();
-        this.hasAttachment = notice.hasAttachment();
+        this.hasAttachment = notice.getHasAttachment();
 
-        if (notice.hasAttachment()) {
+        if (notice.getHasAttachment()) {
             this.attachmentFilename = notice.getAttachmentFilename();
             this.attachmentContentType = notice.getAttachmentContentType();
             this.attachmentSize = notice.getAttachmentSize();
@@ -81,7 +81,7 @@ public class NoticeResponse {
     public String getAuthorDepartment() { return authorDepartment; }
     public void setAuthorDepartment(String authorDepartment) { this.authorDepartment = authorDepartment; }
 
-    public boolean hasAttachment() { return hasAttachment; }
+    public boolean gethasAttachment() { return hasAttachment; }
     public void setHasAttachment(boolean hasAttachment) { this.hasAttachment = hasAttachment; }
 
     public String getAttachmentFilename() { return attachmentFilename; }
