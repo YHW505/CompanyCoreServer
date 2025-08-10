@@ -128,13 +128,13 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Query("SELECT COUNT(t) FROM Task t WHERE t.assignedBy = :userId AND t.status != com.example.companycoreserver.entity.Enum.TaskStatus.DONE")
     long countActiveCreatedTasks(@Param("userId") Long userId);
 
-    // ✅ 첨부파일이 있는 작업들 조회
-    @Query("SELECT t FROM Task t WHERE t.attachmentFilename IS NOT NULL ORDER BY t.createdAt DESC")
-    List<Task> findTasksWithAttachments();
-
-    // ✅ 특정 사용자의 첨부파일이 있는 작업들
-    @Query("SELECT t FROM Task t WHERE t.assignedTo = :userId AND t.attachmentFilename IS NOT NULL ORDER BY t.createdAt DESC")
-    List<Task> findTasksWithAttachmentsByUser(@Param("userId") Long userId);
+//    // ✅ 첨부파일이 있는 작업들 조회
+//    @Query("SELECT t FROM Task t WHERE t.attachmentFilename IS NOT NULL ORDER BY t.createdAt DESC")
+//    List<Task> findTasksWithAttachments();
+//
+//    // ✅ 특정 사용자의 첨부파일이 있는 작업들
+//    @Query("SELECT t FROM Task t WHERE t.assignedTo = :userId AND t.attachmentFilename IS NOT NULL ORDER BY t.createdAt DESC")
+//    List<Task> findTasksWithAttachmentsByUser(@Param("userId") Long userId);
 
     // ✅ 특정 날짜에 시작하는 작업들
     List<Task> findByStartDateOrderByCreatedAtDesc(LocalDate startDate);

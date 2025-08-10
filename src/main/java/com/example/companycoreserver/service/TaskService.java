@@ -172,37 +172,37 @@ public class TaskService {
     }
 
     // ✅ 작업 생성 (첨부파일 포함)
-    @Transactional
-    public Task createTask(Task task, MultipartFile attachmentFile) {
-        try {
-            // 생성 시간 설정
-            task.setCreatedAt(LocalDateTime.now());
-            task.setUpdatedAt(LocalDateTime.now());
-
-            // 첨부파일이 있는 경우 처리
-            if (attachmentFile != null && !attachmentFile.isEmpty()) {
-                // 바이트 배열을 Base64 문자열로 인코딩
-                String base64Content = java.util.Base64.getEncoder().encodeToString(attachmentFile.getBytes());
-
-                task.updateAttachment(
-                        attachmentFile.getOriginalFilename(),
-                        attachmentFile.getContentType(),
-                        base64Content,
-                        attachmentFile.getSize()
-                );
-            }
-
-            Task savedTask = taskRepository.save(task);
-            System.out.println("Task created successfully with ID: " + savedTask.getTaskId());
-            return savedTask;
-        } catch (IOException e) {
-            System.err.println("Error processing attachment file: " + e.getMessage());
-            throw new RuntimeException("Failed to process attachment file", e);
-        } catch (Exception e) {
-            System.err.println("Error creating task: " + e.getMessage());
-            throw new RuntimeException("Failed to create task", e);
-        }
-    }
+//    @Transactional
+//    public Task createTask(Task task, MultipartFile attachmentFile) {
+//        try {
+//            // 생성 시간 설정
+//            task.setCreatedAt(LocalDateTime.now());
+//            task.setUpdatedAt(LocalDateTime.now());
+//
+//            // 첨부파일이 있는 경우 처리
+//            if (attachmentFile != null && !attachmentFile.isEmpty()) {
+//                // 바이트 배열을 Base64 문자열로 인코딩
+//                String base64Content = java.util.Base64.getEncoder().encodeToString(attachmentFile.getBytes());
+//
+//                task.updateAttachment(
+//                        attachmentFile.getOriginalFilename(),
+//                        attachmentFile.getContentType(),
+//                        base64Content,
+//                        attachmentFile.getSize()
+//                );
+//            }
+//
+//            Task savedTask = taskRepository.save(task);
+//            System.out.println("Task created successfully with ID: " + savedTask.getTaskId());
+//            return savedTask;
+//        } catch (IOException e) {
+//            System.err.println("Error processing attachment file: " + e.getMessage());
+//            throw new RuntimeException("Failed to process attachment file", e);
+//        } catch (Exception e) {
+//            System.err.println("Error creating task: " + e.getMessage());
+//            throw new RuntimeException("Failed to create task", e);
+//        }
+//    }
 
     // ✅ 작업 생성 (첨부파일 없이)
     @Transactional
@@ -271,65 +271,65 @@ public class TaskService {
         }
     }
 
-    // ✅ 첨부파일 업데이트 (Long 타입으로 변경)
-    @Transactional
-    public Task updateTaskAttachment(Long taskId, MultipartFile attachmentFile) {
-        try {
-            Optional<Task> taskOpt = taskRepository.findById(taskId);
-            if (taskOpt.isPresent()) {
-                Task task = taskOpt.get();
-
-                if (attachmentFile != null && !attachmentFile.isEmpty()) {
-                    // 바이트 배열을 Base64 문자열로 인코딩
-                    String base64Content = java.util.Base64.getEncoder().encodeToString(attachmentFile.getBytes());
-
-                    task.updateAttachment(
-                            attachmentFile.getOriginalFilename(),
-                            attachmentFile.getContentType(),
-                            base64Content,
-                            attachmentFile.getSize()
-                    );
-                } else {
-                    task.removeAttachment();
-                }
-
-                task.setUpdatedAt(LocalDateTime.now());
-                Task savedTask = taskRepository.save(task);
-                System.out.println("Task attachment updated successfully: " + taskId);
-                return savedTask;
-            } else {
-                throw new RuntimeException("Task not found with id: " + taskId);
-            }
-        } catch (IOException e) {
-            System.err.println("Error processing attachment file: " + e.getMessage());
-            throw new RuntimeException("Failed to process attachment file", e);
-        } catch (Exception e) {
-            System.err.println("Error updating task attachment: " + e.getMessage());
-            throw new RuntimeException("Failed to update task attachment", e);
-        }
-    }
-
-    // ✅ 첨부파일 제거 (Long 타입으로 변경)
-    @Transactional
-    public Task removeTaskAttachment(Long taskId) {
-        try {
-            Optional<Task> taskOpt = taskRepository.findById(taskId);
-            if (taskOpt.isPresent()) {
-                Task task = taskOpt.get();
-                task.removeAttachment();
-                task.setUpdatedAt(LocalDateTime.now());
-
-                Task savedTask = taskRepository.save(task);
-                System.out.println("Task attachment removed successfully: " + taskId);
-                return savedTask;
-            } else {
-                throw new RuntimeException("Task not found with id: " + taskId);
-            }
-        } catch (Exception e) {
-            System.err.println("Error removing task attachment: " + e.getMessage());
-            throw new RuntimeException("Failed to remove task attachment", e);
-        }
-    }
+//    // ✅ 첨부파일 업데이트 (Long 타입으로 변경)
+//    @Transactional
+//    public Task updateTaskAttachment(Long taskId, MultipartFile attachmentFile) {
+//        try {
+//            Optional<Task> taskOpt = taskRepository.findById(taskId);
+//            if (taskOpt.isPresent()) {
+//                Task task = taskOpt.get();
+//
+//                if (attachmentFile != null && !attachmentFile.isEmpty()) {
+//                    // 바이트 배열을 Base64 문자열로 인코딩
+//                    String base64Content = java.util.Base64.getEncoder().encodeToString(attachmentFile.getBytes());
+//
+//                    task.updateAttachment(
+//                            attachmentFile.getOriginalFilename(),
+//                            attachmentFile.getContentType(),
+//                            base64Content,
+//                            attachmentFile.getSize()
+//                    );
+//                } else {
+//                    task.removeAttachment();
+//                }
+//
+//                task.setUpdatedAt(LocalDateTime.now());
+//                Task savedTask = taskRepository.save(task);
+//                System.out.println("Task attachment updated successfully: " + taskId);
+//                return savedTask;
+//            } else {
+//                throw new RuntimeException("Task not found with id: " + taskId);
+//            }
+//        } catch (IOException e) {
+//            System.err.println("Error processing attachment file: " + e.getMessage());
+//            throw new RuntimeException("Failed to process attachment file", e);
+//        } catch (Exception e) {
+//            System.err.println("Error updating task attachment: " + e.getMessage());
+//            throw new RuntimeException("Failed to update task attachment", e);
+//        }
+//    }
+//
+//    // ✅ 첨부파일 제거 (Long 타입으로 변경)
+//    @Transactional
+//    public Task removeTaskAttachment(Long taskId) {
+//        try {
+//            Optional<Task> taskOpt = taskRepository.findById(taskId);
+//            if (taskOpt.isPresent()) {
+//                Task task = taskOpt.get();
+//                task.removeAttachment();
+//                task.setUpdatedAt(LocalDateTime.now());
+//
+//                Task savedTask = taskRepository.save(task);
+//                System.out.println("Task attachment removed successfully: " + taskId);
+//                return savedTask;
+//            } else {
+//                throw new RuntimeException("Task not found with id: " + taskId);
+//            }
+//        } catch (Exception e) {
+//            System.err.println("Error removing task attachment: " + e.getMessage());
+//            throw new RuntimeException("Failed to remove task attachment", e);
+//        }
+//    }
 
     // ✅ 작업 삭제 (Long 타입으로 변경)
     @Transactional

@@ -169,18 +169,18 @@ public class TaskController {
         }
     }
 
-    // ✅ 작업 생성 (첨부파일 포함)
-    @PostMapping(consumes = {"multipart/form-data"})
-    public ResponseEntity<Task> createTask(
-            @RequestPart("task") Task task,
-            @RequestPart(value = "attachmentFile", required = false) MultipartFile attachmentFile) {
-        try {
-            Task createdTask = taskService.createTask(task, attachmentFile);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
+//    // ✅ 작업 생성 (첨부파일 포함)
+//    @PostMapping(consumes = {"multipart/form-data"})
+//    public ResponseEntity<Task> createTask(
+//            @RequestPart("task") Task task,
+//            @RequestPart(value = "attachmentFile", required = false) MultipartFile attachmentFile) {
+//        try {
+//            Task createdTask = taskService.createTask(task, attachmentFile);
+//            return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
+//        } catch (Exception e) {
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+//        }
+//    }
 
     // ✅ 작업 생성 (첨부파일 없이)
     @PostMapping
@@ -214,33 +214,33 @@ public class TaskController {
         }
     }
 
-    // ✅ 첨부파일 업데이트 (Long 타입)
-    @PutMapping("/{taskId}/attachment")
-    public ResponseEntity<Task> updateTaskAttachment(@PathVariable Long taskId, @RequestParam("file") MultipartFile attachmentFile) {
-        try {
-            Task task = taskService.updateTaskAttachment(taskId, attachmentFile);
-            return ResponseEntity.ok(task);
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("not found")) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
-    // ✅ 첨부파일 제거 (Long 타입)
-    @DeleteMapping("/{taskId}/attachment")
-    public ResponseEntity<Task> removeTaskAttachment(@PathVariable Long taskId) {
-        try {
-            Task task = taskService.removeTaskAttachment(taskId);
-            return ResponseEntity.ok(task);
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("not found")) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
+//    // ✅ 첨부파일 업데이트 (Long 타입)
+//    @PutMapping("/{taskId}/attachment")
+//    public ResponseEntity<Task> updateTaskAttachment(@PathVariable Long taskId, @RequestParam("file") MultipartFile attachmentFile) {
+//        try {
+//            Task task = taskService.updateTaskAttachment(taskId, attachmentFile);
+//            return ResponseEntity.ok(task);
+//        } catch (RuntimeException e) {
+//            if (e.getMessage().contains("not found")) {
+//                return ResponseEntity.notFound().build();
+//            }
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+//        }
+//    }
+//
+//    // ✅ 첨부파일 제거 (Long 타입)
+//    @DeleteMapping("/{taskId}/attachment")
+//    public ResponseEntity<Task> removeTaskAttachment(@PathVariable Long taskId) {
+//        try {
+//            Task task = taskService.removeTaskAttachment(taskId);
+//            return ResponseEntity.ok(task);
+//        } catch (RuntimeException e) {
+//            if (e.getMessage().contains("not found")) {
+//                return ResponseEntity.notFound().build();
+//            }
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+//        }
+//    }
 
     // ✅ 작업 삭제 (Long 타입)
     @DeleteMapping("/{taskId}")

@@ -41,18 +41,18 @@ public class Task {
     private LocalDateTime updatedAt;
 
     // 첨부파일 관련 필드들 (테이블 구조와 일치)
-    @Column(name = "attachment_filename", length = 255)
-    private String attachmentFilename;
-
-    @Column(name = "attachment_size")
-    private Long attachmentSize;
-
-    @Column(name = "attachment_content_type", length = 100)
-    private String attachmentContentType;
-
-    @Lob
-    @Column(name = "attachment_content", columnDefinition = "LONGTEXT")
-    private String attachmentContent; // Base64 인코딩된 첨부파일 내용
+//    @Column(name = "attachment_filename", length = 255)
+//    private String attachmentFilename;
+//
+//    @Column(name = "attachment_size")
+//    private Long attachmentSize;
+//
+//    @Column(name = "attachment_content_type", length = 100)
+//    private String attachmentContentType;
+//
+//    @Lob
+//    @Column(name = "attachment_content", columnDefinition = "LONGTEXT")
+//    private String attachmentContent; // Base64 인코딩된 첨부파일 내용
 
     // ✅ 테이블에 있는 assigned_by, assigned_to 컬럼 매핑
     @Column(name = "assigned_by")
@@ -93,22 +93,22 @@ public class Task {
     }
 
     // ✅ 첨부파일 업데이트 메서드
-    public void updateAttachment(String filename, String contentType, String base64Content, Long size) {
-        this.attachmentFilename = filename;
-        this.attachmentContentType = contentType;
-        this.attachmentContent = base64Content;
-        this.attachmentSize = size;
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    // ✅ 첨부파일 제거 메서드
-    public void removeAttachment() {
-        this.attachmentFilename = null;
-        this.attachmentContentType = null;
-        this.attachmentSize = null;
-        this.attachmentContent = null;
-        this.updatedAt = LocalDateTime.now();
-    }
+//    public void updateAttachment(String filename, String contentType, String base64Content, Long size) {
+//        this.attachmentFilename = filename;
+//        this.attachmentContentType = contentType;
+//        this.attachmentContent = base64Content;
+//        this.attachmentSize = size;
+//        this.updatedAt = LocalDateTime.now();
+//    }
+//
+//    // ✅ 첨부파일 제거 메서드
+//    public void removeAttachment() {
+//        this.attachmentFilename = null;
+//        this.attachmentContentType = null;
+//        this.attachmentSize = null;
+//        this.attachmentContent = null;
+//        this.updatedAt = LocalDateTime.now();
+//    }
 
     // ✅ 상태 변경을 위한 편의 메서드들
     public void markAsInProgress() {
@@ -152,17 +152,17 @@ public class Task {
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
-    public String getAttachmentFilename() { return attachmentFilename; }
-    public void setAttachmentFilename(String attachmentFilename) { this.attachmentFilename = attachmentFilename; }
-
-    public Long getAttachmentSize() { return attachmentSize; }
-    public void setAttachmentSize(Long attachmentSize) { this.attachmentSize = attachmentSize; }
-
-    public String getAttachmentContentType() { return attachmentContentType; }
-    public void setAttachmentContentType(String attachmentContentType) { this.attachmentContentType = attachmentContentType; }
-
-    public String getAttachmentContent() { return attachmentContent; }
-    public void setAttachmentContent(String attachmentContent) { this.attachmentContent = attachmentContent; }
+//    public String getAttachmentFilename() { return attachmentFilename; }
+//    public void setAttachmentFilename(String attachmentFilename) { this.attachmentFilename = attachmentFilename; }
+//
+//    public Long getAttachmentSize() { return attachmentSize; }
+//    public void setAttachmentSize(Long attachmentSize) { this.attachmentSize = attachmentSize; }
+//
+//    public String getAttachmentContentType() { return attachmentContentType; }
+//    public void setAttachmentContentType(String attachmentContentType) { this.attachmentContentType = attachmentContentType; }
+//
+//    public String getAttachmentContent() { return attachmentContent; }
+//    public void setAttachmentContent(String attachmentContent) { this.attachmentContent = attachmentContent; }
 
     public Long getAssignedBy() { return assignedBy; }
     public void setAssignedBy(Long assignedBy) { this.assignedBy = assignedBy; }
