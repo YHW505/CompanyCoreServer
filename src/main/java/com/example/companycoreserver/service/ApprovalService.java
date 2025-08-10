@@ -397,6 +397,27 @@ public class ApprovalService {
         return response;
     }
 
+    // 🆕 부장이 본인 부서의 모든 결재 요청 조회 (대기, 처리 완료 모두 포함)
+    public List<ApprovalResponse> getAllApprovalsForManagerDepartment(Long managerUserId) {
+        User manager = userRepository.findById(managerUserId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        // 부서 정보 확인
+        if (manager.getDepartment() == null || manager.getDepartment().getDepartmentId() == null) {
+            throw new RuntimeException("사용자의 부서 정보가 없습니다.");
+        }
+
+        Integer managerDepartmentId = manager.getDepartment().getDepartmentId();
+
+        // 해당 부서의 모든 결재 요청 조회
+        List<Approval> approvals = approvalRepository.findAllByRequesterDepartmentId(managerDepartmentId);
+
+        // Approval 엔티티를 ApprovalResponse DTO로 변환
+        return approvals.stream()
+                .map(this::convertToApprovalResponse)
+                .collect(Collectors.toList());
+    }
+
     // ✅ 부서별 권한 검증 메서드
     public boolean validateDepartmentPermission(Long approvalId, Long approverId) {
         try {

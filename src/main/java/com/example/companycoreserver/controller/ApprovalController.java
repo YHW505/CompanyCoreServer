@@ -185,7 +185,7 @@ public class ApprovalController {
         }
     }
 
-    // ✅ 내가 결재해야 할 대기중인 목록 - DTO 변환
+        // ✅ 내가 결재해야 할 대기중인 목록 - DTO 변환
     @GetMapping("/pending/{userId}")
     public ResponseEntity<List<ApprovalResponse>> getPendingApprovals(@PathVariable Long userId) {
         List<Approval> approvals = approvalService.getPendingApprovals(userId);
@@ -199,21 +199,17 @@ public class ApprovalController {
         return ResponseEntity.ok(responses);
     }
 
-    // 🆕 내가 결재해야 할 대기중인 목록 (페이지네이션 포함)
-    @GetMapping("/pending/{userId}/page")
-    public ResponseEntity<?> getPendingApprovalsWithPagination(
-            @PathVariable Long userId,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir) {
-        
+    // 🆕 부장이 본인 부서의 모든 결재 요청 조회 (대기, 처리 완료 모두 포함)
+    @GetMapping("/manager/all/{userId}")
+    public ResponseEntity<?> getAllApprovalsForManagerDepartment(@PathVariable Long userId) {
         try {
-            var result = approvalService.getPendingApprovalsWithPagination(userId, page, size, sortBy, sortDir);
-            return ResponseEntity.ok(result);
+            List<ApprovalResponse> approvals = approvalService.getAllApprovalsForManagerDepartment(userId);
+            return ResponseEntity.ok(approvals);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "대기중인 결재 목록 조회 실패: " + e.getMessage()));
+                    .body(Map.of("error", "부서 결재 목록 조회 실패: " + e.getMessage()));
         }
     }
 

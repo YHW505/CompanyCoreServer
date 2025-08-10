@@ -78,4 +78,8 @@ public interface ApprovalRepository extends JpaRepository<Approval, Long> {
     // 🆕 부서 정보를 포함하여 결재 조회 (권한 검증용)
     @Query("SELECT a FROM Approval a JOIN FETCH a.requester r JOIN FETCH r.department WHERE a.id = :approvalId")
     Approval findByIdWithRequesterDepartment(@Param("approvalId") Long approvalId);
+
+    // 🆕 요청자의 부서 ID로 모든 결재 목록 조회 (상태 무관)
+    @Query("SELECT a FROM Approval a JOIN a.requester r WHERE r.department.departmentId = :departmentId ORDER BY a.requestDate DESC")
+    List<Approval> findAllByRequesterDepartmentId(@Param("departmentId") Integer departmentId);
 }
