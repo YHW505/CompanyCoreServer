@@ -4,6 +4,8 @@ import com.example.companycoreserver.entity.Notice;
 import java.time.LocalDateTime;
 import java.util.Base64;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class NoticeResponse {
     private Long id;
     private String title;
@@ -11,6 +13,7 @@ public class NoticeResponse {
     private Long authorId;
     private String authorName;
     private String authorDepartment;
+    @JsonProperty("hasAttachment")
     private boolean hasAttachment;
     private String attachmentFilename;
     private String attachmentContentType;
@@ -27,9 +30,9 @@ public class NoticeResponse {
         this.authorId = notice.getAuthorId();
         this.authorName = notice.getAuthorName();
         this.authorDepartment = notice.getAuthorDepartment();
-        this.hasAttachment = notice.getHasAttachment();
+        this.hasAttachment = notice.hasAttachment(); // Use the safe method
 
-        if (notice.getHasAttachment()) {
+        if (notice.hasAttachment()) {
             this.attachmentFilename = notice.getAttachmentFilename();
             this.attachmentContentType = notice.getAttachmentContentType();
             this.attachmentSize = notice.getAttachmentSize();
@@ -81,7 +84,8 @@ public class NoticeResponse {
     public String getAuthorDepartment() { return authorDepartment; }
     public void setAuthorDepartment(String authorDepartment) { this.authorDepartment = authorDepartment; }
 
-    public boolean gethasAttachment() { return hasAttachment; }
+    @JsonProperty("hasAttachment")
+    public boolean isHasAttachment() { return hasAttachment; }
     public void setHasAttachment(boolean hasAttachment) { this.hasAttachment = hasAttachment; }
 
     public String getAttachmentFilename() { return attachmentFilename; }
