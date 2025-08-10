@@ -221,6 +221,13 @@ public class TaskService {
         }
     }
 
+    // 🆕 여러 Task 한번에 생성
+    @Transactional
+    public List<Task> createTasks(List<Task> tasks) {
+        // 배치 처리로 성능 최적화
+        return taskRepository.saveAll(tasks);
+    }
+
     // ✅ 작업 업데이트 (Long 타입으로 변경)
     @Transactional
     public Task updateTask(Long taskId, Task updatedTask) {
