@@ -1,9 +1,9 @@
 package com.example.companycoreserver.entity;
 
 import com.example.companycoreserver.entity.Enum.Role;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -97,7 +97,7 @@ public class User {
     private List<TaskAssignment> taskAssignments = new ArrayList<>();
 
     // 2. 생성한 업무들 - Task의 createdByUser와 연결
-    @OneToMany(mappedBy = "createdByUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "assignedByUser", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonIgnore
     private List<Task> createdTasks = new ArrayList<>();
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
