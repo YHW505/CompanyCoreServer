@@ -87,7 +87,33 @@ public class NoticeService {
     public NoticeResponse getNoticeById(Long id) {
         Notice notice = noticeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 공지사항을 찾을 수 없습니다. ID: " + id));
-        return convertToResponse(notice);
+
+        // LOB 데이터 강제 로딩 및 DTO 수동 생성
+        if (notice.getAttachmentContent() != null) {
+            notice.getAttachmentContent().length(); // Trigger lazy loading
+        }
+
+        NoticeResponse response = new NoticeResponse();
+        response.setId(notice.getId());
+        response.setTitle(notice.getTitle());
+        response.setContent(notice.getContent());
+        response.setAuthorId(notice.getAuthorId());
+        response.setAuthorName(notice.getAuthorName());
+        response.setAuthorDepartment(notice.getAuthorDepartment());
+        response.setCreatedAt(notice.getCreatedAt());
+        response.setUpdatedAt(notice.getUpdatedAt());
+
+        boolean hasAttachment = notice.getAttachmentFilename() != null && !notice.getAttachmentFilename().isEmpty();
+        response.setHasAttachment(hasAttachment);
+
+        if (hasAttachment) {
+            response.setAttachmentFilename(notice.getAttachmentFilename());
+            response.setAttachmentContentType(notice.getAttachmentContentType());
+            response.setAttachmentSize(notice.getAttachmentSize());
+            response.setAttachmentContent(notice.getAttachmentContent());
+        }
+
+        return response;
     }
 
     @Transactional
