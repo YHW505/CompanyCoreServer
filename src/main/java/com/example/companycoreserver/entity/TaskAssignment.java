@@ -4,16 +4,10 @@ import com.example.companycoreserver.entity.Enum.AssignmentRole;
 import com.example.companycoreserver.entity.Enum.AssignmentStatus;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "task_assignment")
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class TaskAssignment {
 
@@ -22,22 +16,17 @@ public class TaskAssignment {
     @Column(name = "assignment_id")
     private Long assignmentId;
 
-    // 🔗 Task와의 관계 (다대일) - Task의 taskId가 Integer이므로 맞춤
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "task_id", nullable = false)
-    @JsonIgnoreProperties({"assignments", "createdByUser"})
-    private Task task;
+    // ✅ 테이블 구조에 맞게 수정 - task_id를 직접 저장
+    @Column(name = "task_id", nullable = false)
+    private Long taskId;
 
-    // 🔗 User와의 관계 (다대일)
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    @JsonIgnoreProperties({"assignedTasks", "createdTasks", "attendances", "schedules"})
-    private User user;
+    // ✅ 테이블 구조에 맞게 수정 - user_id를 직접 저장
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
-    // ✅ AssignmentRole enum 사용 (ASSIGNEE, REVIEWER, OBSERVER)
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
-    private AssignmentRole role; // ASSIGNEE(담당자), REVIEWER(검토자), OBSERVER(참관자)
+    private AssignmentRole role;
 
     @Column(name = "assigned_at")
     private LocalDateTime assignedAt;
@@ -45,29 +34,41 @@ public class TaskAssignment {
     @Column(name = "assigned_by")
     private Long assignedBy;
 
-    // 🔗 할당한 사용자와의 관계
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private AssignmentStatus status = AssignmentStatus.ACTIVE;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
+    // 🔗 관계 매핑 - Task와의 관계 (조회용)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "task_id", insertable = false, updatable = false)
+    @JsonIgnoreProperties({"assignments"})
+    private Task task;
+
+    // 🔗 관계 매핑 - User와의 관계 (조회용)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @JsonIgnoreProperties({"assignedTasks", "createdTasks", "attendances", "schedules"})
+    private User user;
+
+    // 🔗 할당한 사용자와의 관계 (조회용)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_by", insertable = false, updatable = false)
     @JsonIgnoreProperties({"assignedTasks", "createdTasks", "attendances", "schedules"})
     private User assignedByUser;
 
-    // ✅ AssignmentStatus enum 사용 (ACTIVE, COMPLETED, CANCELLED)
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status")
-    private AssignmentStatus status = AssignmentStatus.ACTIVE; // 기본값: ACTIVE(활성)
-
-    // 🆕 업데이트 시간 추가
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    // 🆕 완료 시간 추가 (상태가 COMPLETED로 변경된 시간)
-    @Column(name = "completed_at")
-    private LocalDateTime completedAt;
+    // 기본 생성자
+    public TaskAssignment() {}
 
     // 생성자 (필수 필드만)
-    public TaskAssignment(Task task, User user, AssignmentRole role, Long assignedBy) {
-        this.task = task;
-        this.user = user;
+    public TaskAssignment(Long taskId, Long userId, AssignmentRole role, Long assignedBy) {
+        this.taskId = taskId;
+        this.userId = userId;
         this.role = role;
         this.assignedBy = assignedBy;
         this.status = AssignmentStatus.ACTIVE;
@@ -86,30 +87,63 @@ public class TaskAssignment {
         }
     }
 
-    // ✅ 할당이 활성 상태인지 확인
+    // ✅ 편의 메서드들
     public boolean isActive() {
         return this.status == AssignmentStatus.ACTIVE;
     }
 
-    // ✅ 할당이 완료 상태인지 확인
     public boolean isCompleted() {
         return this.status == AssignmentStatus.COMPLETED;
     }
 
-    // ✅ 담당자인지 확인
     public boolean isAssignee() {
         return this.role == AssignmentRole.ASSIGNEE;
     }
 
-    // ✅ 검토자인지 확인
     public boolean isReviewer() {
         return this.role == AssignmentRole.REVIEWER;
     }
 
-    // ✅ 참관자인지 확인
     public boolean isObserver() {
         return this.role == AssignmentRole.OBSERVER;
     }
+
+    // Getter/Setter
+    public Long getAssignmentId() { return assignmentId; }
+    public void setAssignmentId(Long assignmentId) { this.assignmentId = assignmentId; }
+
+    public Long getTaskId() { return taskId; }
+    public void setTaskId(Long taskId) { this.taskId = taskId; }
+
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
+
+    public AssignmentRole getRole() { return role; }
+    public void setRole(AssignmentRole role) { this.role = role; }
+
+    public LocalDateTime getAssignedAt() { return assignedAt; }
+    public void setAssignedAt(LocalDateTime assignedAt) { this.assignedAt = assignedAt; }
+
+    public Long getAssignedBy() { return assignedBy; }
+    public void setAssignedBy(Long assignedBy) { this.assignedBy = assignedBy; }
+
+    public AssignmentStatus getStatus() { return status; }
+    public void setStatus(AssignmentStatus status) { this.status = status; }
+
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public LocalDateTime getCompletedAt() { return completedAt; }
+    public void setCompletedAt(LocalDateTime completedAt) { this.completedAt = completedAt; }
+
+    public Task getTask() { return task; }
+    public void setTask(Task task) { this.task = task; }
+
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+
+    public User getAssignedByUser() { return assignedByUser; }
+    public void setAssignedByUser(User assignedByUser) { this.assignedByUser = assignedByUser; }
 
     @PrePersist
     protected void onCreate() {
@@ -129,8 +163,8 @@ public class TaskAssignment {
     public String toString() {
         return "TaskAssignment{" +
                 "assignmentId=" + assignmentId +
-                ", taskId=" + (task != null ? task.getTaskId() : null) +
-                ", userId=" + (user != null ? user.getUserId() : null) +
+                ", taskId=" + taskId +
+                ", userId=" + userId +
                 ", role=" + role +
                 ", status=" + status +
                 ", assignedAt=" + assignedAt +
