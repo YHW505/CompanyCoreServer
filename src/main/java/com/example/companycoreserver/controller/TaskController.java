@@ -193,6 +193,13 @@ public class TaskController {
         }
     }
 
+    // 🆕 여러 Task 한번에 생성
+    @PostMapping("/bulk")
+    public ResponseEntity<List<Task>> createTasks(@RequestBody List<Task> tasks) {
+        List<Task> createdTasks = taskService.createTasks(tasks);
+        return ResponseEntity.ok(createdTasks);
+    }
+
     // ✅ 작업 업데이트 (Long 타입)
     @PutMapping("/{taskId}")
     public ResponseEntity<Task> updateTask(@PathVariable Long taskId, @RequestBody Task updatedTask) {
